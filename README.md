@@ -1,5 +1,5 @@
 # Online Game Store — CRUD Web Application
-*A 3-Tier Business Application for the course “Ειδικά Θέματα Τεχνολογίας Λογισμικού”*
+A 3-Tier Business Application for the course “Ειδικά Θέματα Τεχνολογίας Λογισμικού”.
 
 
 
