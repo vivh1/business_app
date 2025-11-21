@@ -61,9 +61,8 @@ This application implements a strict **3-layer architecture**:
 
 ### 2. Business Logic Layer (API)
 - REST controllers  
-- Services implementing core business rules  
-- Repository pattern  
-- **Dependency Injection (required)**  
+- 3 Layers (controllers, business logic, data)
+- Dependency Injection
 - Authentication & Authorization using JWT  
 
 
@@ -81,9 +80,9 @@ Responsibilities:
 ## Tech Stack
 
 - **Front-end:** React  
-- **Backend:** .NET 8 Web API  
-- **ORM:** Entity Framework Core  
+- **Backend:** Python
+- **ORM:** Django ORM
 - **Database:** SQLite  
-- **Testing:** xUnit + Playwright  
+- **Testing:** Postman + 
 - **Project Management:** Trello  
 - **Version Control:** Git + GitHub  
