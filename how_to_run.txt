@@ -1,0 +1,19 @@
+REQUIRED
+	pip install Django
+	pip install djangorestframework
+	pip install django-cors-headers
+	SQLite
+
+postman for back testing - https://identity.getpostman.com/signup?continue=https%3A%2F%2Fgo.postman.co%2Fhome&authFlowId=adbf7fe3-9cbf-448e-a50b-010d2a604291
+ 
+TO RUN
+	cd \business_app\store_api
+	python manage.py makemigrations
+	python manage.py migrate
+	python manage.py runserver
+
+backend available at:
+  http://127.0.0.1:8000/api/login/
+  http://127.0.0.1:8000/api/logout/
+  http://127.0.0.1:8000/api/register/
+  http://127.0.0.1:8000/api/products/
