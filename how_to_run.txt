@@ -8,8 +8,9 @@ postman for back testing - https://identity.getpostman.com/signup?continue=https
  
 TO RUN
 	cd \business_app\store_api
-	python manage.py makemigrations
-	python manage.py migrate
+		(if made changes)
+			python manage.py makemigrations
+			python manage.py migrate
 	python manage.py runserver
 
 CREATE ADMIN
@@ -20,9 +21,9 @@ BACKEND AT
   http://127.0.0.1:8000/api/logout/
   http://127.0.0.1:8000/api/register/
   http://127.0.0.1:8000/api/products/
-
-http://127.0.0.1:8000/admin/login/?next=/admin/
-http://127.0.0.1:8000/admin/
+	(superuser ready setup)
+		http://127.0.0.1:8000/admin/login/?next=/admin/
+		http://127.0.0.1:8000/admin/
 
 FRONTEND AT
 	http://127.0.0.1:8000/
