@@ -28,4 +28,7 @@ BACKEND AT
 FRONTEND AT
 	http://127.0.0.1:8000/
 
-
+DATABSASE ACCESS 
+.\sqlite3.exe db.sqlite3
+.tables
+select * from products_product;
