@@ -336,4 +336,6 @@ function App() {
     );
 }
 
-ReactDOM.render(<App />, document.getElementById('root'));
+console.log("app.js loaded, mounting React...");
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);

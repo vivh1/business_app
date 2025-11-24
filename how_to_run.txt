@@ -12,8 +12,16 @@ TO RUN
 	python manage.py migrate
 	python manage.py runserver
 
+CREATE ADMIN
+	python manage.py createsuperuser
+
 backend available at:
   http://127.0.0.1:8000/api/login/
   http://127.0.0.1:8000/api/logout/
   http://127.0.0.1:8000/api/register/
   http://127.0.0.1:8000/api/products/
+
+http://127.0.0.1:8000/admin/login/?next=/admin/
+http://127.0.0.1:8000/admin/
+
+

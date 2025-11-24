@@ -1,5 +1,6 @@
-PROFILE - NOT AFTER USING HTML PART
-	https://pythonguides.com/create-a-user-profile-using-django/	
+PROFILE - NOT AFTER USING HTML
+	https://pythonguides.com/create-a-user-profile-using-django/
+	https://pythonguides.com/use-django-built-in-login-system/
 
 JWT AUTHENTICATION
 	https://pythonguides.com/jwt-authentication-using-django-rest-framework/

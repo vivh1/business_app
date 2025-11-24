@@ -47,7 +47,7 @@ def login_api(request):
             "id": user.id,
             "username": user.username,
             "email": user.email or "",
-            "is_staff": user.is_staff,
+            "is_admin": user.is_staff or user.is_superuser,
         }
     })
 
@@ -61,7 +61,7 @@ def logout_api(request):
 
 @login_required
 @csrf_exempt  # later you can replace this with proper CSRF/JWT handling
-def profile(request):
+def profile_api(request):
     if request.method == "GET":
         # Return current user/profile data so the SPA can fill the form
         u_form = UserUpdateForm(instance=request.user)
