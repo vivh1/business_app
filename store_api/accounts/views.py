@@ -4,6 +4,73 @@ from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from .forms import UserUpdateForm, ProfileUpdateForm
+from .jwt_utils import get_tokens_for_user
+
+@csrf_exempt
+def register_api(request):
+    if request.method != "POST":
+        return JsonResponse(
+            {"success": False, "message": "Method not allowed"},
+            status=405
+        )
+
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"success": False, "message": "Invalid JSON"},
+            status=400
+        )
+
+    username = data.get("username")
+    email = data.get("email")
+    password = data.get("password")
+
+    # Basic validation
+    if not username or not password:
+        return JsonResponse(
+            {"success": False, "message": "Username and password required"},
+            status=400
+        )
+
+    from django.contrib.auth.models import User
+
+    # Check if username already exists
+    if User.objects.filter(username=username).exists():
+        return JsonResponse(
+            {"success": False, "message": "Username already exists"},
+            status=400
+        )
+
+    # Check email if you want
+    if email and User.objects.filter(email=email).exists():
+        return JsonResponse(
+            {"success": False, "message": "Email already registered"},
+            status=400
+        )
+
+    # Create user
+    user = User.objects.create_user(
+        username=username,
+        email=email or "",
+        password=password
+    )
+
+    # create JWT tokens for the new user
+    tokens = get_tokens_for_user(user)
+    # Also create profile automatically (your signals.py already does this)
+    # so no need to handle Profile creation manually
+
+    return JsonResponse({
+        "success": True,
+        "message": "Account created successfully",
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+        },
+        "tokens": tokens
+    })
 
 @csrf_exempt
 def login_api(request):
@@ -38,7 +105,7 @@ def login_api(request):
         )
 
     # Create session cookie
-    login(request, user)
+    tokens = get_tokens_for_user(user)
 
     # Shape the JSON to match what your JS expects:
     return JsonResponse({
@@ -48,7 +115,8 @@ def login_api(request):
             "username": user.username,
             "email": user.email or "",
             "is_admin": user.is_staff or user.is_superuser,
-        }
+        },
+        "tokens": tokens
     })
 
 @csrf_exempt
@@ -109,66 +177,3 @@ def profile_api(request):
 
     # Method not allowed
     return JsonResponse({"detail": "Method not allowed"}, status=405)
-
-@csrf_exempt
-def register_api(request):
-    if request.method != "POST":
-        return JsonResponse(
-            {"success": False, "message": "Method not allowed"},
-            status=405
-        )
-
-    try:
-        data = json.loads(request.body.decode("utf-8"))
-    except json.JSONDecodeError:
-        return JsonResponse(
-            {"success": False, "message": "Invalid JSON"},
-            status=400
-        )
-
-    username = data.get("username")
-    email = data.get("email")
-    password = data.get("password")
-
-    # Basic validation
-    if not username or not password:
-        return JsonResponse(
-            {"success": False, "message": "Username and password required"},
-            status=400
-        )
-
-    from django.contrib.auth.models import User
-
-    # Check if username already exists
-    if User.objects.filter(username=username).exists():
-        return JsonResponse(
-            {"success": False, "message": "Username already exists"},
-            status=400
-        )
-
-    # Check email if you want
-    if email and User.objects.filter(email=email).exists():
-        return JsonResponse(
-            {"success": False, "message": "Email already registered"},
-            status=400
-        )
-
-    # Create user
-    user = User.objects.create_user(
-        username=username,
-        email=email or "",
-        password=password
-    )
-
-    # Also create profile automatically (your signals.py already does this)
-    # so no need to handle Profile creation manually
-
-    return JsonResponse({
-        "success": True,
-        "message": "Account created successfully",
-        "user": {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-        }
-    })
