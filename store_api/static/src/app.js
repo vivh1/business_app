@@ -46,10 +46,10 @@ function LoginForm({ onLogin }) {
                 localStorage.setItem('user', JSON.stringify(data.user));
                 setTimeout(() => onLogin(data.user), 1000);
             } else {
-                setMessage('❌ ' + (data.message || 'Login failed'));
+                setMessage('Login failed: ' + (data.message || 'Invalid credentials'));
             }
         } catch (error) {
-            setMessage('❌ Cannot connect to server. Make sure Django is running on port 8000.');
+            setMessage('Cannot connect to server. Make sure Django is running on port 8000.');
         } finally {
             setLoading(false);
         }
@@ -84,7 +84,7 @@ function LoginForm({ onLogin }) {
             </button>
             
             {message && (
-                <div className={`message ${message.includes('✅') ? 'success' : 'error'}`}>
+                <div className={`message ${message.includes('Login successful!') ? 'success' : 'error'}`}>
                     {message}
                 </div>
             )}
@@ -107,13 +107,13 @@ function RegisterForm({ onSwitchToLogin }) {
 
         // Basic validation
         if (password !== confirmPassword) {
-            setMessage('❌ Passwords do not match');
+            setMessage('Passwords do not match');
             setLoading(false);
             return;
         }
 
         if (password.length < 3) {
-            setMessage('❌ Password must be at least 3 characters');
+            setMessage('Password must be at least 3 characters');
             setLoading(false);
             return;
         }
@@ -137,7 +137,7 @@ function RegisterForm({ onSwitchToLogin }) {
             // For now, simulate successful registration
             // In reality, you'd need a /api/register/ endpoint in Django
             setTimeout(() => {
-                setMessage('✅ Registration successful! You can now login with your new account.');
+                setMessage('Registration successful! You can now login with your new account.');
                 setLoading(false);
                 
                 // Clear form
@@ -154,7 +154,7 @@ function RegisterForm({ onSwitchToLogin }) {
 
         } catch (error) {
             // If register endpoint doesn't exist, show helpful message
-            setMessage('⚠️ Registration endpoint not available. Contact administrator to enable user registration.');
+            setMessage('Registration endpoint not available. Contact administrator to enable user registration.');
             setLoading(false);
         }
     };
@@ -210,7 +210,7 @@ function RegisterForm({ onSwitchToLogin }) {
             </button>
             
             {message && (
-                <div className={`message ${message.includes('✅') ? 'success' : 'error'}`}>
+                <div className={`message ${message.includes('Registration successful!') ? 'success' : 'error'}`}>
                     {message}
                 </div>
             )}
@@ -227,7 +227,7 @@ function AuthPage({ onLogin }) {
             <div className="navbar">
                 <div className="nav-content">
                     <div className="logo">Game Shop</div>
-                    <div style={{ color: '#666' }}>Welcome to our gaming community</div>
+                    <div style={{ color: '#666' }}>Welcome to our game store!</div>
                 </div>
             </div>
             
@@ -254,14 +254,136 @@ function AuthPage({ onLogin }) {
 }
 
 function MainPage({ user, onLogout }) {
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [showProfileSettings, setShowProfileSettings] = useState(false);
+
+    const toggleDropdown = () => {
+        setShowDropdown(!showDropdown);
+    };
+
+    const handleProfileClick = () => {
+        // Profile action
+        alert('Profile clicked');
+        setShowDropdown(false);
+    };
+
+    const handleSettingsClick = () => {
+        // Navigate to profile settings page
+        setShowProfileSettings(true);
+        setShowDropdown(false);
+    };
+
+    const handleBackFromSettings = () => {
+        setShowProfileSettings(false);
+    };
+
+    const handleSaveProfile = (updatedUser) => {
+        // Save updated user data
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        // You might want to update the parent component's user state here
+        // For now, we'll just show an alert and refresh
+        alert('Profile updated successfully!');
+        window.location.reload(); // Refresh to show updated user data
+    };
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (showDropdown && !event.target.closest('.profile-icon') && !event.target.closest('.dropdown-menu')) {
+                setShowDropdown(false);
+            }
+        };
+        document.addEventListener('click', handleClickOutside);
+        return () => {
+            document.removeEventListener('click', handleClickOutside);
+        };
+    }, [showDropdown]);
+
+    // If profile settings is shown, render the ProfileSettingsPage
+    if (showProfileSettings) {
+        return (
+            <div>
+                <div className="navbar">
+                    <div className="nav-content">
+                        <div className="logo">Game Shop</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <button className="logout-btn" onClick={handleBackFromSettings}>
+                                Back to Dashboard
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <ProfileSettingsPage 
+                    user={user} 
+                    onSave={handleSaveProfile} 
+                    onCancel={handleBackFromSettings}
+                />
+            </div>
+        );
+    }
+
     return (
         <div>
             <div className="navbar">
                 <div className="nav-content">
                     <div className="logo">Game Shop</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', position: 'relative' }}>
                         <span>Welcome, <strong>{user.username}</strong>!</span>
-                        <span className="profile-icon" title="Manage Profile">👤</span>
+                        
+                        {/* Profile Icon Dropdown */}
+                        <div style={{ position: 'relative' }}>
+                            <div 
+                                className="profile-icon" 
+                                title="Manage Profile" 
+                                onClick={toggleDropdown}
+                            >
+                                {user.username.charAt(0).toUpperCase()}
+                            </div>
+                            
+                            {showDropdown && (
+                                <div className="dropdown-menu" style={{
+                                    position: 'absolute',
+                                    top: '50px',
+                                    right: '0',
+                                    background: 'white',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                                    minWidth: '200px',
+                                    zIndex: 1000,
+                                    border: '1px solid #e0e0e0',
+                                    overflow: 'hidden'
+                                }}>
+                                    <div 
+                                        style={{
+                                            padding: '0.75rem 1rem',
+                                            cursor: 'pointer',
+                                            transition: 'background 0.2s',
+                                            fontSize: '0.9rem'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.background = '#f5f5f5'}
+                                        onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
+                                        onClick={handleProfileClick}
+                                    >
+                                        View Profile
+                                    </div>
+                                    <div 
+                                        style={{
+                                            padding: '0.75rem 1rem',
+                                            cursor: 'pointer',
+                                            transition: 'background 0.2s',
+                                            fontSize: '0.9rem',
+                                            borderTop: '1px solid #f0f0f0'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.background = '#f5f5f5'}
+                                        onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
+                                        onClick={handleSettingsClick}
+                                    >
+                                        Settings
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        
                         <button className="logout-btn" onClick={onLogout}>
                             Logout
                         </button>
@@ -270,37 +392,185 @@ function MainPage({ user, onLogout }) {
             </div>
             
             <div className="main-content">
-                <div className="welcome-section">
-                    <h1>Game Shop Dashboard</h1>
-                    <p style={{ color: '#666', marginTop: '0.5rem' }}>
-                        Your ultimate destination for gaming adventures
-                    </p>
-                    
-                    <div className="user-info">
-                        <h3>Your Account Information</h3>
-                        <div style={{ marginTop: '1rem' }}>
-                            <p><strong>Username:</strong> {user.username}</p>
-                            <p><strong>Email:</strong> {user.mail}</p>
-                            <p><strong>User ID:</strong> {user.user_id}</p>
-                            <p><strong>Account Type:</strong> {user.admin ? '👑 Administrator' : '🎯 Standard User'}</p>
-                        </div>
-                    </div>
-                    
+                <div className="welcome-section">                    
                     <div style={{ marginTop: '2rem' }}>
-                        <h3>Quick Actions</h3>
-                        <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap' }}>
-                            <button style={{ padding: '1rem 2rem', background: '#667eea', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
-                                Browse Games
-                            </button>
-                            <button style={{ padding: '1rem 2rem', background: '#28a745', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
-                                My Library
-                            </button>
-                            <button style={{ padding: '1rem 2rem', background: '#ffc107', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
-                                Account Settings
-                            </button>
-                        </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    );
+}
+
+function ProfileSettingsPage({ user, onSave, onCancel }) {
+    const [formData, setFormData] = useState({
+        username: user.username || '',
+        email: user.mail || '',
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+    });
+    
+    const [message, setMessage] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setMessage('');
+
+        // Validation
+        if (formData.newPassword && formData.newPassword !== formData.confirmPassword) {
+            setMessage('New passwords do not match');
+            setLoading(false);
+            return;
+        }
+
+        if (formData.newPassword && formData.newPassword.length < 3) {
+            setMessage('New password must be at least 3 characters');
+            setLoading(false);
+            return;
+        }
+
+        try {
+            // Simulate API call to update user profile
+            // In a real app, you would call your Django backend here
+            setTimeout(() => {
+                const updatedUser = {
+                    ...user,
+                    username: formData.username,
+                    mail: formData.email
+                };
+                
+                setMessage('Profile updated successfully!');
+                setLoading(false);
+                
+                if (onSave) {
+                    onSave(updatedUser);
+                }
+            }, 1500);
+
+        } catch (error) {
+            setMessage('Failed to update profile. Please try again.');
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="profile-settings-page">
+            <div className="profile-settings-container">
+                <h1 style={{ marginBottom: '2rem', color: '#333' }}>Profile Settings</h1>
+                
+                <form onSubmit={handleSubmit} style={{ maxWidth: '600px', margin: '0 auto' }}>
+                    <div style={{ display: 'grid', gap: '1.5rem' }}>
+                        <div>
+                            <h3 style={{ marginBottom: '1rem', color: '#333' }}>Account Information</h3>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <div className="form-group">
+                                    <label>Username</label>
+                                    <input
+                                        type="text"
+                                        name="username"
+                                        value={formData.username}
+                                        onChange={handleChange}
+                                        required
+                                        style={{ width: '100%' }}
+                                    />
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label>Email</label>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        required
+                                        style={{ width: '100%' }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 style={{ marginBottom: '1rem', color: '#333' }}>Change Password (Optional)</h3>
+                            <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                                Leave blank if you don't want to change your password
+                            </p>
+                            
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <div className="form-group">
+                                    <label>Current Password</label>
+                                    <input
+                                        type="password"
+                                        name="currentPassword"
+                                        value={formData.currentPassword}
+                                        onChange={handleChange}
+                                        placeholder="Enter current password"
+                                        style={{ width: '100%' }}
+                                    />
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label>New Password</label>
+                                    <input
+                                        type="password"
+                                        name="newPassword"
+                                        value={formData.newPassword}
+                                        onChange={handleChange}
+                                        placeholder="Enter new password"
+                                        style={{ width: '100%' }}
+                                    />
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label>Confirm New Password</label>
+                                    <input
+                                        type="password"
+                                        name="confirmPassword"
+                                        value={formData.confirmPassword}
+                                        onChange={handleChange}
+                                        placeholder="Confirm new password"
+                                        style={{ width: '100%' }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {message && (
+                        <div className={`message ${message.includes('successfully') ? 'success' : 'error'}`} style={{ marginTop: '1.5rem' }}>
+                            {message}
+                        </div>
+                    )}
+                    
+                    <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', justifyContent: 'flex-end' }}>
+                        <button 
+                            type="button" 
+                            className="cancel-btn"
+                            onClick={onCancel}
+                            disabled={loading}
+                            style={{ padding: '0.75rem 1.5rem' }}
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            type="submit" 
+                            className="save-btn"
+                            disabled={loading}
+                            style={{ padding: '0.75rem 1.5rem' }}
+                        >
+                            {loading ? 'Saving...' : 'Save Changes'}
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     );
