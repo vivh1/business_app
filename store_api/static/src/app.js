@@ -105,7 +105,6 @@ function RegisterForm({ onSwitchToLogin }) {
         setLoading(true);
         setMessage('');
 
-        // Basic validation
         if (password !== confirmPassword) {
             setMessage('Passwords do not match');
             setLoading(false);
@@ -119,8 +118,6 @@ function RegisterForm({ onSwitchToLogin }) {
         }
 
         try {
-            // Since you can't modify the backend, we'll simulate registration
-            // In a real app, this would call your Django register endpoint
             const response = await fetch('http://localhost:8000/api/register/', {
                 method: 'POST',
                 headers: {
@@ -134,26 +131,21 @@ function RegisterForm({ onSwitchToLogin }) {
                 })
             });
 
-            // For now, simulate successful registration
-            // In reality, you'd need a /api/register/ endpoint in Django
             setTimeout(() => {
                 setMessage('Registration successful! You can now login with your new account.');
                 setLoading(false);
                 
-                // Clear form
                 setUsername('');
                 setEmail('');
                 setPassword('');
                 setConfirmPassword('');
                 
-                // Switch to login after successful registration
                 setTimeout(() => {
                     onSwitchToLogin();
                 }, 2000);
             }, 1500);
 
         } catch (error) {
-            // If register endpoint doesn't exist, show helpful message
             setMessage('Registration endpoint not available. Contact administrator to enable user registration.');
             setLoading(false);
         }
@@ -262,13 +254,11 @@ function MainPage({ user, onLogout }) {
     };
 
     const handleProfileClick = () => {
-        // Profile action
         alert('Profile clicked');
         setShowDropdown(false);
     };
 
     const handleSettingsClick = () => {
-        // Navigate to profile settings page
         setShowProfileSettings(true);
         setShowDropdown(false);
     };
@@ -278,15 +268,11 @@ function MainPage({ user, onLogout }) {
     };
 
     const handleSaveProfile = (updatedUser) => {
-        // Save updated user data
         localStorage.setItem('user', JSON.stringify(updatedUser));
-        // You might want to update the parent component's user state here
-        // For now, we'll just show an alert and refresh
         alert('Profile updated successfully!');
-        window.location.reload(); // Refresh to show updated user data
+        window.location.reload();
     };
 
-    // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (showDropdown && !event.target.closest('.profile-icon') && !event.target.closest('.dropdown-menu')) {
@@ -299,7 +285,6 @@ function MainPage({ user, onLogout }) {
         };
     }, [showDropdown]);
 
-    // If profile settings is shown, render the ProfileSettingsPage
     if (showProfileSettings) {
         return (
             <div>
@@ -330,7 +315,6 @@ function MainPage({ user, onLogout }) {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', position: 'relative' }}>
                         <span>Welcome, <strong>{user.username}</strong>!</span>
                         
-                        {/* Profile Icon Dropdown */}
                         <div style={{ position: 'relative' }}>
                             <div 
                                 className="profile-icon" 
@@ -426,7 +410,6 @@ function ProfileSettingsPage({ user, onSave, onCancel }) {
         setLoading(true);
         setMessage('');
 
-        // Validation
         if (formData.newPassword && formData.newPassword !== formData.confirmPassword) {
             setMessage('New passwords do not match');
             setLoading(false);
@@ -440,8 +423,6 @@ function ProfileSettingsPage({ user, onSave, onCancel }) {
         }
 
         try {
-            // Simulate API call to update user profile
-            // In a real app, you would call your Django backend here
             setTimeout(() => {
                 const updatedUser = {
                     ...user,
