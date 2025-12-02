@@ -56,8 +56,6 @@ def register_api(request):
         password=password
     )
 
-    # create JWT tokens for the new user
-    tokens = get_tokens_for_user(user)
     # Also create profile automatically (your signals.py already does this)
     # so no need to handle Profile creation manually
 
@@ -113,7 +111,6 @@ def login_api(request):
         "user": {
             "id": user.id,
             "username": user.username,
-            "email": user.email or "",
             "is_admin": user.is_staff or user.is_superuser,
         },
         "tokens": tokens

@@ -15,6 +15,18 @@ See all branches (local + remote)
 	git branch -a
 
 ====================
+ VIRTUAL ENVIRONMENT
+====================
+
+Enable venv:
+
+Linux:
+source venv/bin/activate
+
+Windows:
+.\venv\Scripts\Activate
+
+====================
  FOR EVERY TIME USE
 ====================
 

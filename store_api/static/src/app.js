@@ -43,7 +43,8 @@ function LoginForm({ onLogin }) {
             
             if (data.success) {
                 setMessage('Login successful!');
-                localStorage.setItem('user', JSON.stringify(data.user));
+                localStorage.setItem('accessToken',JSON.stringify(data.tokens)); // refreshToken on LocalStorage NOT a good idea
+                localStorage.setItem('user', JSON.stringify(data.user)); // also NOT a good idea
                 setTimeout(() => onLogin(data.user), 1000);
             } else {
                 setMessage('❌ ' + (data.message || 'Login failed'));
@@ -321,6 +322,7 @@ function App() {
     };
 
     const handleLogout = () => {
+        localStorage.removeItem('accessToken')
         setCurrentUser(null);
         localStorage.removeItem('user');
     };

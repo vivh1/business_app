@@ -1,0 +1,6 @@
+JWT:
+    HTTP Only Cookie for Refresh Token
+    Implement JWT to rest of pages (perimene th cyel dld)
+
+Front-End:
+    Find a way to NOT store user in local storage
