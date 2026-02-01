@@ -168,24 +168,30 @@
         }
         
         .main-content {
-            max-width: 1200px;
-            margin: 80px auto 0;
+            padding-top: 80px;
+            min-height: calc(100vh - 80px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+        }
+        
+        .blank-page {
+            text-align: center;
+            color: white;
+            max-width: 600px;
             padding: 2rem;
         }
         
-        .welcome-section {
-            background: white;
-            padding: 3rem;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            margin-bottom: 2rem;
+        .blank-page h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
         
-        .user-info {
-            background: #f8f9fa;
-            padding: 2rem;
-            border-radius: 15px;
-            margin: 2rem 0;
+        .blank-page p {
+            font-size: 1.2rem;
+            opacity: 0.9;
         }
         
         .logout-btn {
@@ -204,27 +210,136 @@
             transform: translateY(-1px);
         }
         
+        /* Profile Icon Styles */
         .profile-icon {
-            font-size: 1.5rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
             cursor: pointer;
-            margin-left: 1rem;
             transition: all 0.3s ease;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         
         .profile-icon:hover {
-            transform: scale(1.1);
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        
+        /* Profile Settings Page Styles */
+        .profile-settings-page,
+        .manage-users-page {
+            padding: 100px 2rem 2rem;
+            min-height: 100vh;
+            background: #f8f9fa;
+        }
+        
+        .profile-settings-container,
+        .manage-users-container {
+            background: white;
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .manage-users-container {
+            max-width: 1000px;
+        }
+        
+        /* Form styles */
+        .profile-settings-container .form-group,
+        .manage-users-container .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .profile-settings-container label,
+        .manage-users-container label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        .profile-settings-container input,
+        .manage-users-container input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+        
+        .profile-settings-container input:focus,
+        .manage-users-container input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        /* Action buttons */
+        .save-btn,
+        .cancel-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .save-btn {
+            background: #28a745;
+            color: white;
+        }
+        
+        .save-btn:hover:not(:disabled) {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .cancel-btn {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .cancel-btn:hover:not(:disabled) {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+        
+        .save-btn:disabled,
+        .cancel-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
     </style>
 </head>
 <body>
-    {% load static %}
     <div id="root"></div>
 
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <script type="text/babel" data-presets="react,env" src="{% static 'src/app.js' %}"></script>
+    <script type="text/babel" data-presets="react,env" src="/static/components/AuthPage.js"></script>
+    <script type="text/babel" data-presets="react,env" src="/static/components/MainPage.js"></script>
+    <script type="text/babel" data-presets="react,env" src="/static/components/ProfileSettingsPage.js"></script>
+    <script type="text/babel" data-presets="react,env" src="/static/components/ManageUsersPage.js"></script>
+    <script type="text/babel" data-presets="react,env" src="/static/components/App.js"></script>
 
 </body>
 </html>
