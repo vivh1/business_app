@@ -3,7 +3,7 @@ const { useState } = React;
 function ProfileSettingsPage({ user, onSave, onCancel }) {
     const [formData, setFormData] = useState({
         username: user.username || '',
-        email: user.mail || '',
+        email: user.email || '',
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
@@ -42,7 +42,7 @@ function ProfileSettingsPage({ user, onSave, onCancel }) {
                 const updatedUser = {
                     ...user,
                     username: formData.username,
-                    mail: formData.email
+                    email: formData.email
                 };
                 
                 setMessage('Profile updated successfully!');
