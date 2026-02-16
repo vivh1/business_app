@@ -4,6 +4,35 @@ function MainPage({ user, onLogout }) {
     const [showDropdown, setShowDropdown] = useState(false);
     const [showProfileSettings, setShowProfileSettings] = useState(false);
     const [showManageUsers, setShowManageUsers] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState(null);
+    
+    // Categories data
+    const [categories, setCategories] = useState([
+        { id: 1, name: 'Action', image: '', visible: true, games: [
+            { id: 1, name: 'Game 1', image: '' },
+            { id: 2, name: 'Game 2', image: '' },
+            { id: 3, name: 'Game 3', image: '' }
+        ]},
+        { id: 2, name: 'Adventure', image: '', visible: true, games: [
+            { id: 4, name: 'Game 4', image: '' },
+            { id: 5, name: 'Game 5', image: '' }
+        ]},
+        { id: 3, name: 'RPG', image: '', visible: true, games: [
+            { id: 6, name: 'Game 6', image: '' },
+            { id: 7, name: 'Game 7', image: '' },
+            { id: 8, name: 'Game 8', image: '' }
+        ]},
+        { id: 4, name: 'Strategy', image: '', visible: true, games: [
+            { id: 9, name: 'Game 9', image: '' }
+        ]},
+        { id: 5, name: 'Sports', image: '', visible: true, games: [
+            { id: 10, name: 'Game 10', image: '' },
+            { id: 11, name: 'Game 11', image: '' }
+        ]}
+    ]);
+    
+    const [sortOrder, setSortOrder] = useState('default');
+    const [filterVisible, setFilterVisible] = useState('all');
 
     const toggleDropdown = () => {
         setShowDropdown(!showDropdown);
@@ -40,6 +69,55 @@ function MainPage({ user, onLogout }) {
         window.location.reload();
     };
 
+    const toggleCategoryVisibility = (categoryId) => {
+        setCategories(categories.map(cat => 
+            cat.id === categoryId ? { ...cat, visible: !cat.visible } : cat
+        ));
+    };
+
+    const toggleAllVisibility = () => {
+        const allVisible = categories.every(cat => cat.visible);
+        setCategories(categories.map(cat => ({ ...cat, visible: !allVisible })));
+    };
+
+    const handleSortChange = (order) => {
+        setSortOrder(order);
+    };
+
+    const handleFilterChange = (filter) => {
+        setFilterVisible(filter);
+    };
+
+    const getFilteredAndSortedCategories = () => {
+        let filtered = [...categories];
+        
+        if (filterVisible === 'visible') {
+            filtered = filtered.filter(cat => cat.visible);
+        } else if (filterVisible === 'hidden') {
+            filtered = filtered.filter(cat => !cat.visible);
+        }
+        
+        if (sortOrder === 'asc') {
+            filtered.sort((a, b) => a.name.localeCompare(b.name));
+        } else if (sortOrder === 'desc') {
+            filtered.sort((a, b) => b.name.localeCompare(a.name));
+        } else {
+            filtered.sort((a, b) => a.id - b.id);
+        }
+        
+        return filtered;
+    };
+
+    const handleCategoryClick = (category) => {
+        if (category.visible) {
+            setSelectedCategory(category);
+        }
+    };
+
+    const handleBackToCategories = () => {
+        setSelectedCategory(null);
+    };
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (showDropdown && !event.target.closest('.profile-icon') && !event.target.closest('.dropdown-menu')) {
@@ -58,8 +136,8 @@ function MainPage({ user, onLogout }) {
                 <div className="navbar">
                     <div className="nav-content">
                         <div className="logo">Game Shop</div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                            <button className="logout-btn" onClick={handleBackFromManageUsers}>
+                        <div>
+                            <button className="back-btn" onClick={handleBackFromManageUsers}>
                                 Back to Dashboard
                             </button>
                         </div>
@@ -79,8 +157,8 @@ function MainPage({ user, onLogout }) {
                 <div className="navbar">
                     <div className="nav-content">
                         <div className="logo">Game Shop</div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                            <button className="logout-btn" onClick={handleBackFromSettings}>
+                        <div>
+                            <button className="back-btn" onClick={handleBackFromSettings}>
                                 Back to Dashboard
                             </button>
                         </div>
@@ -95,80 +173,71 @@ function MainPage({ user, onLogout }) {
         );
     }
 
+    if (selectedCategory) {
+        return (
+            <div>
+                <div className="navbar">
+                    <div className="nav-content">
+                        <div className="logo">Game Shop</div>
+                        <div>
+                            <button className="back-btn" onClick={handleBackToCategories}>
+                                Back to Categories
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="main-content">
+                    <div className="content-wrapper">
+                        <h1 className="page-title">{selectedCategory.name} Games</h1>
+                        
+                        <div className="cards-grid">
+                            {selectedCategory.games.map(game => (
+                                <div key={game.id} className="game-card">
+                                    <div className="game-image">
+                                        [Image: {game.image}]
+                                    </div>
+                                    <div className="game-info">
+                                        <h3 className="game-name">{game.name}</h3>
+                                        <p className="game-id">Game #{game.id}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    const displayedCategories = getFilteredAndSortedCategories();
+
     return (
         <div>
             <div className="navbar">
                 <div className="nav-content">
                     <div className="logo">Game Shop</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', position: 'relative' }}>
-                        <span>Welcome, <strong>{user.username}</strong>!</span>
+                        <span className="welcome-text">Welcome, <strong>{user.username}</strong>!</span>
                         
                         <div style={{ position: 'relative' }}>
-                            <div 
-                                className="profile-icon" 
-                                title="Manage Profile" 
-                                onClick={toggleDropdown}
-                            >
+                            <div className="profile-icon" onClick={toggleDropdown}>
                                 {user.username.charAt(0).toUpperCase()}
                             </div>
                             
                             {showDropdown && (
-                                <div className="dropdown-menu" style={{
-                                    position: 'absolute',
-                                    top: '50px',
-                                    right: '0',
-                                    background: 'white',
-                                    borderRadius: '8px',
-                                    boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                                    minWidth: '200px',
-                                    zIndex: 1000,
-                                    border: '1px solid #e0e0e0',
-                                    overflow: 'hidden'
-                                }}>
-                                    <div 
-                                        style={{
-                                            padding: '0.75rem 1rem',
-                                            cursor: 'pointer',
-                                            transition: 'background 0.2s',
-                                            fontSize: '0.9rem'
-                                        }}
-                                        onMouseEnter={(e) => e.currentTarget.style.background = '#f5f5f5'}
-                                        onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
-                                        onClick={handleProfileClick}
-                                    >
+                                <div className="dropdown-menu">
+                                    <div className="dropdown-item" onClick={handleProfileClick}>
                                         View Profile
                                     </div>
-                                    <div 
-                                        style={{
-                                            padding: '0.75rem 1rem',
-                                            cursor: 'pointer',
-                                            transition: 'background 0.2s',
-                                            fontSize: '0.9rem',
-                                            borderTop: '1px solid #f0f0f0'
-                                        }}
-                                        onMouseEnter={(e) => e.currentTarget.style.background = '#f5f5f5'}
-                                        onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
-                                        onClick={handleSettingsClick}
-                                    >
+                                    <div className="dropdown-item" onClick={handleSettingsClick}>
                                         Settings
                                     </div>
                                     
                                     {user.admin && (
                                         <>
-                                            <div style={{ borderTop: '1px solid #e0e0e0', margin: '0' }}></div>
-                                            <div 
-                                                style={{
-                                                    padding: '0.75rem 1rem',
-                                                    cursor: 'pointer',
-                                                    transition: 'background 0.2s',
-                                                    fontSize: '0.9rem',
-                                                    color: '#667eea',
-                                                    fontWeight: '600'
-                                                }}
-                                                onMouseEnter={(e) => e.currentTarget.style.background = '#f0f4ff'}
-                                                onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
-                                                onClick={handleManageUsersClick}
-                                            >
+                                            <div className="dropdown-divider"></div>
+                                            <div className="admin-item" onClick={handleManageUsersClick}>
                                                 Manage Users
                                             </div>
                                         </>
@@ -185,15 +254,75 @@ function MainPage({ user, onLogout }) {
             </div>
             
             <div className="main-content">
-                <div className="blank-page">
-                    <h1>Game Shop Dashboard</h1>
-                    <p>
-                        ~Main Page lol~
-                        Only Access to Settings rn
-                    </p>
-                    <p style={{ marginTop: '2rem', opacity: 0.8 }}>
-                        TBA
-                    </p>
+                <div className="content-wrapper">
+                    <h1 className="page-title">Game Categories</h1>
+                    
+                    <div className="filters-container">
+                        <div className="filter-group">
+                            <span className="filter-label">Sort:</span>
+                            <select 
+                                className="filter-select"
+                                value={sortOrder}
+                                onChange={(e) => handleSortChange(e.target.value)}
+                            >
+                                <option value="default">Default</option>
+                                <option value="asc">Alphabetical (A-Z)</option>
+                                <option value="desc">Alphabetical (Z-A)</option>
+                            </select>
+                        </div>
+                        
+                        <div className="filter-group">
+                            <span className="filter-label">Show:</span>
+                            <select 
+                                className="filter-select"
+                                value={filterVisible}
+                                onChange={(e) => handleFilterChange(e.target.value)}
+                            >
+                                <option value="all">All Categories</option>
+                                <option value="visible">Visible Only</option>
+                                <option value="hidden">Hidden Only</option>
+                            </select>
+                            
+                            <button className="toggle-all-btn" onClick={toggleAllVisibility}>
+                                Toggle All
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div className="cards-grid">
+                        {displayedCategories.map(category => (
+                            <div 
+                                key={category.id} 
+                                className={`category-card ${!category.visible ? 'hidden' : ''}`}
+                                onClick={() => handleCategoryClick(category)}
+                            >
+                                <div className="category-image">
+                                    [Image: {category.image}]
+                                    
+                                    <button
+                                        className="visibility-btn"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            toggleCategoryVisibility(category.id);
+                                        }}
+                                    >
+                                        {category.visible ? 'Visible' : 'Invisible'}
+                                    </button>
+                                </div>
+                                <div className="category-info">
+                                    <div className="category-header">
+                                        <h3 className="category-name">{category.name}</h3>
+                                        <span className="game-count">
+                                            {category.games.length} games
+                                        </span>
+                                    </div>
+                                    <p className="category-status">
+                                        {category.visible ? 'Click to view games' : 'Hidden'}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>

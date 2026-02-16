@@ -42,7 +42,7 @@ function ProfileSettingsPage({ user, onSave, onCancel }) {
                 const updatedUser = {
                     ...user,
                     username: formData.username,
-                    email: formData.email
+                    mail: formData.email
                 };
                 
                 setMessage('Profile updated successfully!');

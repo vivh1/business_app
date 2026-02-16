@@ -219,7 +219,7 @@ function AuthPage({ onLogin }) {
             <div className="navbar">
                 <div className="nav-content">
                     <div className="logo">Game Shop</div>
-                    <div style={{ color: '#666' }}>Welcome to our store</div>
+                    <div className="logo">Welcome to our store</div>
                 </div>
             </div>
             
