@@ -15,7 +15,10 @@ function MainPage({ user, onLogout }) {
     const [showAddGame, setShowAddGame] = useState(false);
     const [newGameName, setNewGameName] = useState('');
     const [newGameImage, setNewGameImage] = useState('');
-    
+
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [showSearchResults, setShowSearchResults] = useState(false);
     
     // Categories data
     const [categories, setCategories] = useState([
@@ -91,7 +94,6 @@ function MainPage({ user, onLogout }) {
         setSortOrder(order);
     };
 
-
     const getFilteredAndSortedCategories = () => {
         let filtered = [...categories];
         
@@ -106,7 +108,54 @@ function MainPage({ user, onLogout }) {
         return filtered;
     };
 
-        // Category functions (Admin only)
+    const getSortedGames = (games) => {
+        let sorted = [...games];
+        if (sortOrder === 'asc') {
+            sorted.sort((a, b) => a.name.localeCompare(b.name));
+        } else if (sortOrder === 'desc') {
+            sorted.sort((a, b) => b.name.localeCompare(a.name));
+        }
+        return sorted;
+    };
+
+    const handleSearch = (query) => {
+        setSearchQuery(query);
+        
+        if (query.trim() === '') {
+            setSearchResults([]);
+            setShowSearchResults(false);
+            return;
+        }
+        
+        // Search through all games in all categories
+        const results = [];
+        categories.forEach(category => {
+            category.games.forEach(game => {
+                if (game.name.toLowerCase().includes(query.toLowerCase())) {
+                    results.push({
+                        ...game,
+                        categoryName: category.name,
+                        categoryId: category.id
+                    });
+                }
+            });
+        });
+        
+        setSearchResults(results);
+        setShowSearchResults(true);
+    };
+
+    const handleSearchResultClick = (game, categoryId) => {
+    // Find the category and set it as selected
+        const category = categories.find(c => c.id === categoryId);
+        if (category) {
+            setSelectedCategory(category);
+            setShowSearchResults(false);
+            setSearchQuery('');
+        }
+    };
+
+    // Category functions (Admin only)
     const handleAddCategory = () => {
         if (!user.is_admin) return;
         if (newCategoryName.trim()) {
@@ -120,7 +169,7 @@ function MainPage({ user, onLogout }) {
             };
             setCategories([...categories, newCategory]);
             setNewCategoryName('');
-            setNewCategoryImage('URL_HERE');
+            setNewCategoryImage('');
             setShowAddCategory(false);
         }
     };
@@ -129,6 +178,9 @@ function MainPage({ user, onLogout }) {
         if (!user.is_admin) return;
         if (window.confirm('Are you sure you want to delete this category and all its games?')) {
             setCategories(categories.filter(c => c.id !== categoryId));
+            if (selectedCategory && selectedCategory.id === categoryId) {
+                setSelectedCategory(null);
+            }
         }
     };
 
@@ -140,7 +192,7 @@ function MainPage({ user, onLogout }) {
         setEditingCategory(null);
     };
 
-        // Game functions (Admin only)
+    // Game functions (Admin only)
     const handleAddGame = (categoryId) => {
         if (!user.is_admin) return;
         if (newGameName.trim()) {
@@ -157,8 +209,16 @@ function MainPage({ user, onLogout }) {
                     ? { ...c, games: [...c.games, newGame] } 
                     : c
             ));
+            
+            if (selectedCategory && selectedCategory.id === categoryId) {
+                setSelectedCategory({
+                    ...selectedCategory,
+                    games: [...selectedCategory.games, newGame]
+                });
+            }
+            
             setNewGameName('');
-            setNewGameImage('URL_HERE');
+            setNewGameImage('');
             setShowAddGame(false);
         }
     };
@@ -171,27 +231,41 @@ function MainPage({ user, onLogout }) {
                     ? { ...c, games: c.games.filter(g => g.id !== gameId) } 
                     : c
             ));
+            
+            if (selectedCategory && selectedCategory.id === categoryId) {
+                setSelectedCategory({
+                    ...selectedCategory,
+                    games: selectedCategory.games.filter(g => g.id !== gameId)
+                });
+            }
         }
     };
 
     const handleRenameGame = (categoryId, gameId, newName) => {
         if (!user.is_admin) return;
-        setCategories(categories.map(c => 
-            c.id === categoryId 
-                ? { ...c, games: c.games.map(g => 
-                    g.id === gameId ? { ...g, name: newName } : g
+        if (newName.trim()) {
+            setCategories(categories.map(c => 
+                c.id === categoryId 
+                    ? { ...c, games: c.games.map(g => 
+                        g.id === gameId ? { ...g, name: newName } : g
                     )} 
-                : c
-        ));
+                    : c
+            ));
+            
+            if (selectedCategory && selectedCategory.id === categoryId) {
+                setSelectedCategory({
+                    ...selectedCategory,
+                    games: selectedCategory.games.map(g =>
+                        g.id === gameId ? { ...g, name: newName } : g
+                    )
+                });
+            }
+        }
         setEditingGame(null);
     };
 
     const handleCategoryClick = (category) => {
-            setSelectedCategory(category);
-    };
-
-    const handleBackToCategories = () => {
-        setSelectedCategory(null);
+        setSelectedCategory(category);
     };
 
     useEffect(() => {
@@ -250,20 +324,16 @@ function MainPage({ user, onLogout }) {
     }
 
     if (selectedCategory) {
+        const filteredGames = selectedCategory.games.filter(game => 
+            game.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+
         return (
             <div>
                 <div className="navbar">
                     <div className="nav-content">
                         <div className="logo">Game Shop</div>
                         <div style={{ display: 'flex', gap: '1rem' }}>
-                            {user.is_admin && (
-                                <button 
-                                    className="back-btn admin-add-btn" 
-                                    onClick={() => setShowAddGame(true)}
-                                >
-                                    + Add Game
-                                </button>
-                            )}
                             <button className="back-btn" onClick={() => setSelectedCategory(null)}>
                                 Back to Categories
                             </button>
@@ -275,7 +345,78 @@ function MainPage({ user, onLogout }) {
                     <div className="content-wrapper">
                         <h1 className="page-title">{selectedCategory.name} Games</h1>
                         
-                        {/* ADD THIS - Add Game Form */}
+                        <div className="filters-container">
+                            <div className="filter-group">
+                                <span className="filter-label">Sort:</span>
+                                <select 
+                                    className="filter-select"
+                                    value={sortOrder}
+                                    onChange={(e) => handleSortChange(e.target.value)}
+                                >
+                                    <option value="default">Default</option>
+                                    <option value="asc">Alphabetical (A-Z)</option>
+                                    <option value="desc">Alphabetical (Z-A)</option>
+                                </select>
+                            </div>
+
+                            <div className="search-container">
+                                <div className="search-wrapper"></div>
+                                    <input
+                                        type="text"
+                                        className="search-input"
+                                        placeholder="Search for games..."
+                                        value={searchQuery}
+                                        onChange={(e) => handleSearch(e.target.value)}
+                                    />
+                                
+                                    {searchQuery && (
+                                        <button
+                                            className="search-clear-btn"
+                                            onClick={() => {
+                                                setSearchQuery('');
+                                            }}
+                                            aria-label="Clear search"
+                                        >
+                                            ✕
+                                        </button>
+                                    )}
+
+
+                                {/* Search Results Dropdown */}
+                                {showSearchResults && searchResults.length > 0 && (
+                                    <div className="search-results">
+                                        {searchResults.map((game, index) => (
+                                            <div
+                                                key={index}
+                                                className="search-result-item"
+                                                onClick={() => handleSearchResultClick(game, game.categoryId)}
+                                            >
+                                                <div className="search-result-name">{game.name}</div>
+                                                <div className="search-result-category">
+                                                    {game.categoryName}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                
+                                {showSearchResults && searchQuery && searchResults.length === 0 && (
+                                    <div className="no-results">
+                                        No games found matching "{searchQuery}"
+                                    </div>
+                                )}
+                            </div>
+                        
+                            {user.is_admin && (
+                                <button 
+                                    className="btn-add" 
+                                    onClick={() => setShowAddGame(true)}
+                                >
+                                    + Add Game
+                                </button>
+                            )}
+                        </div>
+
                         {showAddGame && user.is_admin && (
                             <div className="add-form-container">
                                 <h3 className="form-title">Add New Game</h3>
@@ -294,48 +435,80 @@ function MainPage({ user, onLogout }) {
                                     onChange={(e) => setNewGameImage(e.target.value)}
                                 />
                                 <div className="form-buttons">
-                                    <button className="save-btn" onClick={() => handleAddGame(selectedCategory.id)}>Save</button>
-                                    <button className="cancel-btn" onClick={() => setShowAddGame(false)}>Cancel</button>
+                                    <button className="btn-save" onClick={() => handleAddGame(selectedCategory.id)}>Save</button>
+                                    <button className="btn-cancel" onClick={() => setShowAddGame(false)}>Cancel</button>
                                 </div>
                             </div>
                         )}
                         
+                        {/* Games Grid */}
                         <div className="cards-grid">
-                            {selectedCategory.games.map(game => (
+                            {getSortedGames(filteredGames).map(game => (
                                 <div key={game.id} className="game-card">
                                     <div className="game-image">
                                         [Image: {game.image}]
                                     </div>
-                                    <div className="game-info">
+                                    <div className="game-info" onClick={(e) => e.stopPropagation()}>
                                         {editingGame === game.id ? (
                                             <input
                                                 type="text"
                                                 className="edit-input"
                                                 defaultValue={game.name}
-                                                onBlur={(e) => handleRenameGame(selectedCategory.id, game.id, e.target.value)}
-                                                onKeyPress={(e) => e.key === 'Enter' && handleRenameGame(selectedCategory.id, game.id, e.target.value)}
+                                                onBlur={(e) => {
+                                                    handleRenameGame(selectedCategory.id, game.id, e.target.value);
+                                                    setEditingGame(null);
+                                                }}
+                                                onKeyPress={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        handleRenameGame(selectedCategory.id, game.id, e.target.value);
+                                                        setEditingGame(null);
+                                                    }
+                                                }}
+                                                onClick={(e) => e.stopPropagation()}
                                                 autoFocus
                                             />
                                         ) : (
                                             <h3 className="game-name">{game.name}</h3>
                                         )}
                                         
-                                        {/* ADD THIS - Admin Controls for Games */}
+                                        {/* Admin Controls - Stylish buttons */}
                                         {user.is_admin && (
-                                            <div className="admin-controls">
-                                                <button className="rename-btn" onClick={() => setEditingGame(game.id)}>Rename</button>
-                                                <button className="delete-btn" onClick={() => handleDeleteGame(selectedCategory.id, game.id)}>Delete</button>
+                                            <div className="game-actions">
+                                                <button 
+                                                    className="btn-rename" 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setEditingGame(game.id);
+                                                    }}
+                                                >
+                                                    Rename
+                                                </button>
+                                                <button 
+                                                    className="btn-delete" 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeleteGame(selectedCategory.id, game.id);
+                                                    }}
+                                                >
+                                                    Delete
+                                                </button>
                                             </div>
                                         )}
                                     </div>
                                 </div>
                             ))}
+                            {/* Show message if no games match search */}
+                            {filteredGames.length === 0 && searchQuery && (
+                                <div className="no-search-results">
+                                    No games found matching "{searchQuery}" in {selectedCategory.name}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
-            </div>
-        );
-    }
+         </div>
+    );
+}
 
     const displayedCategories = getFilteredAndSortedCategories();
 
@@ -347,7 +520,7 @@ function MainPage({ user, onLogout }) {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', position: 'relative' }}>
                         <span className="welcome-text">Welcome, <strong>{user.username}</strong>!</span>
                         
-                        <div style={{ position: 'relative' }}>
+                        <div className="profile-container">
                             <div className="profile-icon" onClick={toggleDropdown}>
                                 {user.username.charAt(0).toUpperCase()}
                             </div>
@@ -384,6 +557,7 @@ function MainPage({ user, onLogout }) {
                 <div className="content-wrapper">
                     <h1 className="page-title">Game Categories</h1>
                     
+                    
                     <div className="filters-container">
                         <div className="filter-group">
                             <span className="filter-label">Sort:</span>
@@ -396,148 +570,179 @@ function MainPage({ user, onLogout }) {
                                 <option value="asc">Alphabetical (A-Z)</option>
                                 <option value="desc">Alphabetical (Z-A)</option>
                             </select>
+
+                                {/* Search Bar - Between Sort and Add Category */}
+                            <div className="search-container">
+                                <div className="search-wrapper"></div>
+                                    <input
+                                        type="text"
+                                        className="search-input"
+                                        placeholder="Search for games..."
+                                        value={searchQuery}
+                                        onChange={(e) => handleSearch(e.target.value)}
+                                    />
+                                
+                                    {searchQuery && (
+                                        <button
+                                            className="search-clear-btn"
+                                            onClick={() => {
+                                                setSearchQuery('');
+                                            }}
+                                            aria-label="Clear search"
+                                        >
+                                            ✕
+                                        </button>
+                                    )}
+
+
+                                {/* Search Results Dropdown */}
+                                {showSearchResults && searchResults.length > 0 && (
+                                    <div className="search-results">
+                                        {searchResults.map((game, index) => (
+                                            <div
+                                                key={index}
+                                                className="search-result-item"
+                                                onClick={() => handleSearchResultClick(game, game.categoryId)}
+                                            >
+                                                <div className="search-result-name">{game.name}</div>
+                                                <div className="search-result-category">
+                                                    {game.categoryName}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                
+                                {showSearchResults && searchQuery && searchResults.length === 0 && (
+                                    <div className="no-results">
+                                        No games found matching "{searchQuery}"
+                                    </div>
+                                )}
+                            </div>
+                            
+                            {/* Admin Add Category Button */}
+                            {user.admin && (
+                                <button 
+                                    className="add-category-btn" 
+                                    onClick={() => setShowAddCategory(true)}
+                                >
+                                    + Add Category
+                                </button>
+                            )}
                         </div>
 
                         {user.is_admin && (
-                        <button 
-                            className="add-category-btn" 
-                            onClick={() => setShowAddCategory(true)}
-                            style={{
-                                padding: '0.5rem 1.5rem',
-                                background: '#28a745',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '5px',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            + Add Category
-                        </button>
-                    )}
+                            <button 
+                                className="btn-add" 
+                                onClick={() => setShowAddCategory(true)}
+                            >
+                                + Add Category
+                            </button>
+                        )}
                     </div>
 
+                    {/* Add Category Form */}
                     {showAddCategory && user.is_admin && (
-                    <div style={{
-                        background: 'rgba(255,255,255,0.95)',
-                        padding: '1.5rem',
-                        borderRadius: '15px',
-                        marginBottom: '2rem'
-                    }}>
-                        <h3 style={{ marginBottom: '1rem', color: '#333' }}>Add New Category</h3>
-                        <input
-                            type="text"
-                            placeholder="Category Name"
-                            value={newCategoryName}
-                            onChange={(e) => setNewCategoryName(e.target.value)}
-                            style={{
-                                padding: '0.75rem',
-                                marginRight: '1rem',
-                                borderRadius: '5px',
-                                border: '1px solid #ddd',
-                                width: '300px',
-                                marginBottom: '1rem'
-                            }}
-                        />
-                        <input
-                            type="text"
-                            placeholder="Image URL (optional)"
-                            value={newCategoryImage}
-                            onChange={(e) => setNewCategoryImage(e.target.value)}
-                            style={{
-                                padding: '0.75rem',
-                                marginRight: '1rem',
-                                borderRadius: '5px',
-                                border: '1px solid #ddd',
-                                width: '300px',
-                                marginBottom: '1rem'
-                            }}
-                        />
-                        <div>
-                            <button onClick={handleAddCategory} style={{
-                                padding: '0.75rem 1.5rem',
-                                background: '#28a745',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                                marginRight: '0.5rem'
-                            }}>Save</button>
-                            <button onClick={() => setShowAddCategory(false)} style={{
-                                padding: '0.75rem 1.5rem',
-                                background: '#6c757d',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '5px',
-                                cursor: 'pointer'
-                            }}>Cancel</button>
+                        <div className="add-form-container">
+                            <h3 className="form-title">Add New Category</h3>
+                            <input
+                                type="text"
+                                placeholder="Category Name"
+                                className="form-input"
+                                value={newCategoryName}
+                                onChange={(e) => setNewCategoryName(e.target.value)}
+                            />
+                            <input
+                                type="text"
+                                placeholder="Image URL (optional)"
+                                className="form-input"
+                                value={newCategoryImage}
+                                onChange={(e) => setNewCategoryImage(e.target.value)}
+                            />
+                            <div className="form-buttons">
+                                <button className="btn-save" onClick={handleAddCategory}>Save</button>
+                                <button className="btn-cancel" onClick={() => setShowAddCategory(false)}>Cancel</button>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
                     
                     <div className="cards-grid">
-                        {displayedCategories.map(category => (
-                            <div 
-                                key={category.id} 
-                                className={`category-card`}
-                                onClick={() => handleCategoryClick(category)}
-                            >
+                        {displayedCategories
+                            .map(category => ({
+                                ...category,
+                                filteredGames: category.games.filter(game => 
+                                    game.name.toLowerCase().includes(searchQuery.toLowerCase())
+                                )
+                            }))
+                            .filter(category => 
+                                searchQuery === '' || category.filteredGames.length > 0
+                            )
+                            .map(category => (
+                                <div 
+                                    key={category.id} 
+                                    className="category-card"
+                                    onClick={() => handleCategoryClick(category)}
+                                >
                                 <div className="category-image">
                                     [Image: {category.image}]
                                 </div>
-                                <div className="category-info">
-                                    <div className="category-header">
-                                        <h3 className="category-name">{category.name}</h3>
-                                        <span className="game-count">
-                                            {category.games.length} games
-                                        </span>
+                                    <div className="category-info" onClick={(e) => e.stopPropagation()}>
+                                        {editingCategory === category.id ? (
+                                            <input
+                                                type="text"
+                                                className="edit-input"
+                                                defaultValue={category.name}
+                                                onBlur={(e) => {
+                                                    handleRenameCategory(category.id, e.target.value);
+                                                    setEditingCategory(null);
+                                                }}
+                                                onKeyPress={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        handleRenameCategory(category.id, e.target.value);
+                                                        setEditingCategory(null);
+                                                    }
+                                                }}
+                                                onClick={(e) => e.stopPropagation()}
+                                                autoFocus
+                                            />
+                            ) : (
+                                        <div className="category-header">
+                                            <h3 className="category-name">{category.name}</h3>
+                                            <span className="game-count">
+                                                {searchQuery ? category.filteredGames.length : category.games.length} games
+                                            </span>
+                                        </div>
+                            )}
+                                    
+                                        {user.is_admin && (
+                                            <div className="category-actions">
+                                                <button 
+                                                    className="btn-rename" 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setEditingCategory(category.id);
+                                                    }}
+                                                >
+                                                    Rename
+                                                </button>
+                                                <button 
+                                                    className="btn-delete" 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeleteCategory(category.id);
+                                                    }}
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
-
-                                    {user.is_admin && (
-                                    <div className="admin-controls" style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
-                                        <button 
-                                            className="rename-btn" 
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setEditingCategory(category.id);
-                                            }}
-                                            style={{
-                                                padding: '0.25rem 0.75rem',
-                                                background: '#ffc107',
-                                                color: '#333',
-                                                border: 'none',
-                                                borderRadius: '3px',
-                                                cursor: 'pointer',
-                                                fontSize: '0.8rem'
-                                            }}
-                                        >
-                                            Rename
-                                        </button>
-                                        <button 
-                                            className="delete-btn" 
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleDeleteCategory(category.id);
-                                            }}
-                                            style={{
-                                                padding: '0.25rem 0.75rem',
-                                                background: '#dc3545',
-                                                color: 'white',
-                                                border: 'none',
-                                                borderRadius: '3px',
-                                                cursor: 'pointer',
-                                                fontSize: '0.8rem'
-                                            }}
-                                        >
-                                            Delete
-                                        </button>
-                                    </div>
-                                )}
                                 </div>
-                            </div>
                         ))}
                     </div>
                 </div>
             </div>
         </div>
+        
     );
 }
