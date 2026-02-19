@@ -19,6 +19,8 @@ function MainPage({ user, onLogout }) {
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [showSearchResults, setShowSearchResults] = useState(false);
+
+    const [selectedGame, setSelectedGame] = useState(null);
     
     // Categories data
     const [categories, setCategories] = useState([
@@ -150,6 +152,7 @@ function MainPage({ user, onLogout }) {
         const category = categories.find(c => c.id === categoryId);
         if (category) {
             setSelectedCategory(category);
+            handleGameClick(game, category);
             setShowSearchResults(false);
             setSearchQuery('');
         }
@@ -264,6 +267,52 @@ function MainPage({ user, onLogout }) {
         setEditingGame(null);
     };
 
+    const handleUpdateGame = (categoryId, gameId, updatedFields) => {
+        if (!user.admin) return;
+        setCategories(categories.map(c => 
+            c.id === categoryId 
+                ? { ...c, games: c.games.map(g => 
+                    g.id === gameId ? { ...g, ...updatedFields } : g
+                )} 
+                : c
+        ));
+        
+        // Also update selectedGame if it's the current one
+        if (selectedGame && selectedGame.id === gameId) {
+            setSelectedGame({ ...selectedGame, ...updatedFields });
+        }
+    };
+
+    const handleGameClick = (game, category) => {
+        setSelectedGame({ ...game, categoryName: category.name });
+    };
+
+    const handleBackFromGame = () => {
+        setSelectedGame(null);
+    };
+
+    const handleAddToCart = (gameWithDetails) => {
+        // Get existing cart from localStorage or initialize empty array
+        const existingCart = JSON.parse(localStorage.getItem('cart')) || [];
+        
+        // Check if game already in cart
+        const existingItemIndex = existingCart.findIndex(item => item.id === gameWithDetails.id);
+        
+        if (existingItemIndex >= 0) {
+            // Update quantity if already in cart
+            existingCart[existingItemIndex].quantity += gameWithDetails.quantity;
+        } else {
+            // Add new item
+            existingCart.push(gameWithDetails);
+        }
+        
+        // Save to localStorage
+        localStorage.setItem('cart', JSON.stringify(existingCart));
+        
+        // Optional: Show cart count in navbar
+        alert(`${gameWithDetails.name} added to cart!`);
+    };
+
     const handleCategoryClick = (category) => {
         setSelectedCategory(category);
     };
@@ -279,6 +328,19 @@ function MainPage({ user, onLogout }) {
             document.removeEventListener('click', handleClickOutside);
         };
     }, [showDropdown]);
+
+    if (selectedGame) {
+        return (
+            <GamePage
+                game={selectedGame}
+                categoryName={selectedGame.categoryName}
+                user={user}
+                onBack={handleBackFromGame}
+                onAddToCart={handleAddToCart}
+                onUpdateGame={handleUpdateGame}
+            />
+        );
+    }
 
     if (showManageUsers) {
         return (
@@ -367,6 +429,8 @@ function MainPage({ user, onLogout }) {
                                         placeholder="Search for games..."
                                         value={searchQuery}
                                         onChange={(e) => handleSearch(e.target.value)}
+                                        onFocus={() => setShowSearchResults(true)}
+                                        onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
                                     />
                                 
                                     {searchQuery && (
@@ -374,6 +438,7 @@ function MainPage({ user, onLogout }) {
                                             className="search-clear-btn"
                                             onClick={() => {
                                                 setSearchQuery('');
+                                                setShowSearchResults(false);
                                             }}
                                             aria-label="Clear search"
                                         >
@@ -444,7 +509,7 @@ function MainPage({ user, onLogout }) {
                         {/* Games Grid */}
                         <div className="cards-grid">
                             {getSortedGames(filteredGames).map(game => (
-                                <div key={game.id} className="game-card">
+                                <div key={game.id} className="game-card" onClick={() => handleGameClick(game, selectedCategory)}>
                                     <div className="game-image">
                                         [Image: {game.image}]
                                     </div>
@@ -580,6 +645,8 @@ function MainPage({ user, onLogout }) {
                                         placeholder="Search for games..."
                                         value={searchQuery}
                                         onChange={(e) => handleSearch(e.target.value)}
+                                        onFocus={() => setShowSearchResults(true)}
+                                        onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
                                     />
                                 
                                     {searchQuery && (
@@ -587,6 +654,7 @@ function MainPage({ user, onLogout }) {
                                             className="search-clear-btn"
                                             onClick={() => {
                                                 setSearchQuery('');
+                                                setShowSearchResults(false);
                                             }}
                                             aria-label="Clear search"
                                         >
@@ -602,7 +670,10 @@ function MainPage({ user, onLogout }) {
                                             <div
                                                 key={index}
                                                 className="search-result-item"
-                                                onClick={() => handleSearchResultClick(game, game.categoryId)}
+                                                onClick={() => {
+                                                    handleSearchResultClick(game, game.categoryId);
+                                                    setShowSearchResults(false);
+                                                }}
                                             >
                                                 <div className="search-result-name">{game.name}</div>
                                                 <div className="search-result-category">
