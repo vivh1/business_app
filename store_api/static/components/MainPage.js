@@ -21,6 +21,9 @@ function MainPage({ user, onLogout }) {
     const [showSearchResults, setShowSearchResults] = useState(false);
 
     const [selectedGame, setSelectedGame] = useState(null);
+
+    const [showCart, setShowCart] = useState(false);
+    const [cartCount, setCartCount] = useState(0);
     
     // Categories data
     const [categories, setCategories] = useState([
@@ -86,6 +89,14 @@ function MainPage({ user, onLogout }) {
         setShowManageUsers(false);
     };
 
+    const handleCartClick = () => {
+        setShowCart(true);
+        setShowDropdown(false);
+    };
+
+    const handleBackFromCart = () => {
+        setShowCart(false);
+    };
     const handleSaveProfile = (updatedUser) => {
         localStorage.setItem('user', JSON.stringify(updatedUser));
         alert('Profile updated successfully!');
@@ -296,7 +307,10 @@ function MainPage({ user, onLogout }) {
         const existingCart = JSON.parse(localStorage.getItem('cart')) || [];
         
         // Check if game already in cart
-        const existingItemIndex = existingCart.findIndex(item => item.id === gameWithDetails.id);
+        const existingItemIndex = existingCart.findIndex(item => 
+            item.id === gameWithDetails.id && 
+            item.platform === gameWithDetails.platform
+        );
         
         if (existingItemIndex >= 0) {
             // Update quantity if already in cart
@@ -308,9 +322,6 @@ function MainPage({ user, onLogout }) {
         
         // Save to localStorage
         localStorage.setItem('cart', JSON.stringify(existingCart));
-        
-        // Optional: Show cart count in navbar
-        alert(`${gameWithDetails.name} added to cart!`);
     };
 
     const handleCategoryClick = (category) => {
@@ -328,6 +339,24 @@ function MainPage({ user, onLogout }) {
             document.removeEventListener('click', handleClickOutside);
         };
     }, [showDropdown]);
+
+    useEffect(() => {
+        const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        setCartCount(cart.reduce((total, item) => total + item.quantity, 0));
+    }, []);
+
+    if (showCart) {
+        return (
+            <CartPage
+                user={user}
+                onBack={handleBackFromCart}
+                onUpdateCart={(cart) => {
+                    // Optional: Update cart count in navbar
+                    console.log('Cart updated:', cart);
+                }}
+            />
+        );
+    }
 
     if (selectedGame) {
         return (
@@ -585,10 +614,16 @@ function MainPage({ user, onLogout }) {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', position: 'relative' }}>
                         <span className="welcome-text">Welcome, <strong>{user.username}</strong>!</span>
                         
+                        <button className="cart-icon" onClick={handleCartClick} title="View Cart">
+                            🛒
+                            {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+                        </button>
+
                         <div className="profile-container">
                             <div className="profile-icon" onClick={toggleDropdown}>
                                 {user.username.charAt(0).toUpperCase()}
                             </div>
+
                             
                             {showDropdown && (
                                 <div className="dropdown-menu">
@@ -607,13 +642,13 @@ function MainPage({ user, onLogout }) {
                                             </div>
                                         </>
                                     )}
+                                    <div className="dropdown-divider"></div>
+                                    <div className="dropdown-item logout-dropdown-item" onClick={onLogout}>
+                                        Logout
+                                    </div>
                                 </div>
                             )}
                         </div>
-                        
-                        <button className="logout-btn" onClick={onLogout}>
-                            Logout
-                        </button>
                     </div>
                 </div>
             </div>
