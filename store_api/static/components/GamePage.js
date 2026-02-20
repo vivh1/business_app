@@ -122,14 +122,8 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
     return (
         <div className="game-details-page">
             <div className="navbar">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    {/* Cart Icon - Same as MainPage */}
-                    <button className="cart-icon" onClick={onCartClick} title="View Cart">
-                        🛒
-                        {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
-                    </button>
-                    
-                    {/* Back button */}
+                <div className="nav-content">
+                    <div className="logo">Game Shop</div>
                     <button className="back-btn" onClick={onBack}>
                         ← Back to {categoryName}
                     </button>
