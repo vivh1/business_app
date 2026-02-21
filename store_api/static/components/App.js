@@ -3,20 +3,13 @@ const { useState, useEffect } = React;
 function App() {
     const [currentUser, setCurrentUser] = useState(null);
 
-    useEffect(() => {
-        const savedUser = localStorage.getItem('user');
-        if (savedUser) {
-            setCurrentUser(JSON.parse(savedUser));
-        }
-    }, []);
-
     const handleLogin = (user) => {
         setCurrentUser(user);
+        // Don't save to localStorage
     };
 
     const handleLogout = () => {
         setCurrentUser(null);
-        localStorage.removeItem('user');
     };
 
     return (

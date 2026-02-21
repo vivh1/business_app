@@ -88,6 +88,7 @@ def login_api(request):
 
     username = data.get("username")
     password = data.get("password")
+    email = data.get("email") # Added this just to allow the email to be visible in the Profile Settings, thx - Cyel
 
     if not username or not password:
         return JsonResponse(
@@ -111,6 +112,7 @@ def login_api(request):
         "user": {
             "id": user.id,
             "username": user.username,
+            "email": user.email, # Also added this for the same reason as the other email related one - Cyel
             "is_admin": user.is_staff or user.is_superuser,
         },
         "tokens": tokens

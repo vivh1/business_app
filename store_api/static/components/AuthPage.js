@@ -43,8 +43,6 @@ function LoginForm({ onLogin }) {
             
             if (data.success) {
                 setMessage('Login successful!');
-                localStorage.setItem('accessToken',JSON.stringify(data.tokens)); // refreshToken on LocalStorage NOT a good idea
-                localStorage.setItem('user', JSON.stringify(data.user));
                 setTimeout(() => onLogin(data.user), 1000);
             } else {
                 setMessage('Login failed: ' + (data.message || 'Invalid credentials'));
@@ -128,7 +126,7 @@ function RegisterForm({ onSwitchToLogin }) {
                     username, 
                     email, 
                     password,
-                    admin: false 
+                    is_admin: false 
                 })
             });
 
@@ -219,7 +217,7 @@ function AuthPage({ onLogin }) {
             <div className="navbar">
                 <div className="nav-content">
                     <div className="logo">Game Shop</div>
-                    <div style={{ color: '#666' }}>Welcome to our store</div>
+                    <div className="logo">Welcome to our store</div>
                 </div>
             </div>
             
