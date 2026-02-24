@@ -3,8 +3,17 @@ from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from .forms import UserUpdateForm, ProfileUpdateForm
-from .jwt_utils import get_tokens_for_user
+from .repositories import userRepository
+from .services import authenticationService
+from .services import tokenService
+from .services import userService
+
+user_repository = userRepository()
+token_service = tokenService()
+user_service = userService(user_repository)
+auth_service = authenticationService(user_repository)
 
 @csrf_exempt
 def register_api(request):
@@ -33,41 +42,13 @@ def register_api(request):
             status=400
         )
 
-    from django.contrib.auth.models import User
-
-    # Check if username already exists
-    if User.objects.filter(username=username).exists():
-        return JsonResponse(
-            {"success": False, "message": "Username already exists"},
-            status=400
-        )
-
-    # Check email if you want
-    if email and User.objects.filter(email=email).exists():
-        return JsonResponse(
-            {"success": False, "message": "Email already registered"},
-            status=400
-        )
-
     # Create user
-    user = User.objects.create_user(
-        username=username,
-        email=email or "",
-        password=password
-    )
+    result = auth_service.register(username,email,password)
 
-    # Also create profile automatically (your signals.py already does this)
-    # so no need to handle Profile creation manually
-
+    # JsonResponse
     return JsonResponse({
-        "success": True,
-        "message": "Account created successfully",
-        "user": {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-        },
-        "tokens": tokens
+        "success": result.success,
+        "message": result.message
     })
 
 @csrf_exempt
@@ -88,7 +69,6 @@ def login_api(request):
 
     username = data.get("username")
     password = data.get("password")
-    email = data.get("email") # Added this just to allow the email to be visible in the Profile Settings, thx - Cyel
 
     if not username or not password:
         return JsonResponse(
@@ -96,15 +76,14 @@ def login_api(request):
             status=400
         )
 
-    user = authenticate(request, username=username, password=password)
+    user = auth_service.login(username,password)
     if user is None:
         return JsonResponse(
             {"success": False, "message": "Invalid credentials"},
-            status=400
+            status=401
         )
 
-    # Create session cookie
-    tokens = get_tokens_for_user(user)
+    tokens = token_service.give_tokens(user)
 
     # Shape the JSON to match what your JS expects:
     return JsonResponse({
@@ -112,7 +91,6 @@ def login_api(request):
         "user": {
             "id": user.id,
             "username": user.username,
-            "email": user.email, # Also added this for the same reason as the other email related one - Cyel
             "is_admin": user.is_staff or user.is_superuser,
         },
         "tokens": tokens
@@ -125,6 +103,17 @@ def logout_api(request):
 
     logout(request)
     return JsonResponse({"detail": "logged out"})
+
+def users_api(request):
+    if request.method != "GET":
+        return JsonResponse({"detail": "Method not allowed"}, status=405)
+
+    user_list = user_service.get_all_users()
+
+    users_data = [{"username": user.username, "email": user.email,"admin": user.is_superuser} for user in user_list]
+
+    return JsonResponse({"users": users_data})
+
 
 @login_required
 @csrf_exempt  # later you can replace this with proper CSRF/JWT handling
