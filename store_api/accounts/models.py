@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
+from django.contrib import admin
 
 # Create your models here.
 class Profile(models.Model):
@@ -12,4 +13,4 @@ class Profile(models.Model):
     """profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)"""
 
     def __str__(self):
-        return f"{self.user.username}'s Profile"
+        pass
