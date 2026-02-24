@@ -7,3 +7,5 @@ class AccountsConfig(AppConfig):
 
     def ready(self):
         import accounts.signals
+        import accounts.repositories
+        import accounts.services
