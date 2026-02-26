@@ -30,42 +30,37 @@ class userService:
     def get_by_username(self,username):
         return self.user_repository.get_by_username(username)
 
-    def update_user(self,username,password,email,id_in): 
+    def update_user(self,username,new_password,old_password,email,id_in): 
         # TODO: STREAMLINE THE UPDATES (DES ELEGXOUS TOU LOGIN!!)
         user = self.user_repository.get_by_id(id_in)
 
         updated = False
-
-        # prepei na elegxei to mail oti den uparxei kai to username xwris na tsekarei ton eauto tou
-        if self.user_repository.exists_by_email(email) or self.user_repository.exists_by_username(username):
-            return None
         
-        """
-        if email != user.email:
-            if self.user_repository.exists_by_email(email, user.id):
-                raise Exception("Email already taken")
+        if not check_password(old_password,user.password):
+            return -3
 
-        if username != user.username:
-            if self.user_repository.exists_by_username(username, user.id):
-                raise Exception("Username already taken")
-        """
-
-        if username:
-            user.username = username
+        if new_password:
+            user.set_password(new_password)
             updated = True
         
-        if password:
-            user.set_password(password)
-            updated = True
+        if email and email != user.email:
+            if self.user_repository.exists_by_email(email):
+                return -1
+            else:
+                user.email = email
+                updated = True
 
-        if email:
-            user.email = email
-            updated = True
+        if username and username != user.username:
+            if self.user_repository.exists_by_username(username):
+                return -2
+            else:
+                user.username = username
+                updated = True 
         
         if updated:
             self.user_repository.save(user)
 
-        return username
+        return 0
 
 class ServiceResult:
     def __init__(self, success, message):

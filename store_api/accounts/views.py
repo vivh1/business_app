@@ -130,18 +130,29 @@ def update_api(request):
 
     username = data.get("username")
     email = data.get("email")
-    password = data.get("password")
+    old_password = data.get("currentPassword")
+    new_password = data.get("newPassword")
     usid = data.get("id")
 
-    print(username,email,password,usid)
+    username_check = user_service.update_user(username,new_password,old_password,email,usid)
 
-    username_check = user_service.update_user(username,password,email,usid)
-
-    if username_check is None:
+    if username_check is -3:
            return JsonResponse(
-            {"success": False, "message": "Invalid User"},
+            {"success": False, "message": "Invalid password"},
             status=401
-        )     
+        )   
+
+    if username_check is -1:
+           return JsonResponse(
+            {"success": False, "message": "Email is taken"},
+            status=401
+        )
+
+    if username_check is -2:
+           return JsonResponse(
+            {"success": False, "message": "Username is taken"},
+            status=401
+        )       
 
     user = user_service.get_by_username(username)
 
