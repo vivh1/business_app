@@ -104,6 +104,7 @@ def logout_api(request):
     logout(request)
     return JsonResponse({"detail": "logged out"})
 
+@csrf_exempt
 def users_api(request):
     if request.method != "GET":
         return JsonResponse({"detail": "Method not allowed"}, status=405)
@@ -114,6 +115,41 @@ def users_api(request):
 
     return JsonResponse({"users": users_data})
 
+@csrf_exempt
+def update_api(request):
+    if request.method != "POST":
+        return JsonResponse({"detail": "Method not allowed"}, status=405)
+
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"success": False, "message": "Invalid JSON"},
+            status=401
+        )
+
+    username = data.get("username")
+    email = data.get("email")
+    password = data.get("password")
+    usid = data.get("id")
+
+    print(username,email,password,usid)
+
+    username_check = user_service.update_user(username,password,email,usid)
+
+    if username_check is None:
+           return JsonResponse(
+            {"success": False, "message": "Invalid User"},
+            status=401
+        )     
+
+    user = user_service.get_by_username(username)
+
+    return JsonResponse({"success": True, 
+        "user":{"username": user.username,
+                "email":user.email,
+                },    
+    })
 
 @login_required
 @csrf_exempt  # later you can replace this with proper CSRF/JWT handling

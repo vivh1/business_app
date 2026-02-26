@@ -5,3 +5,6 @@ store_api/sqlite3.exe
 # Python cache
 __pycache__/
 *.pyc
+
+# Virtual Environment
+venv/
