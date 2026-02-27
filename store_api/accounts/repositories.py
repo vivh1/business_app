@@ -13,8 +13,20 @@ class userRepository:
         except self.user.DoesNotExist:
             return None
 
+    def get_by_id(self,user_id):
+        try:
+            return self.user.objects.get(id=user_id)
+        except self.user.DoesNotExist:
+            return None     
+
     def exists_by_email(self, email):
         return self.user.objects.filter(email=email).exists()
 
+    def exists_by_username(self,username):
+        return self.user.objects.filter(username=username).exists()
+
     def get_all_users(self):
         return User.objects.all()
+    
+    def save(self,user):
+        user.save()
