@@ -37,6 +37,8 @@ function ProfileSettingsPage({ user, onSave, onCancel }) {
             return;
         }
 
+        if (formData.newPassword) password = newPassword
+
         try {
             setTimeout(() => {
                 const updatedUser = {
@@ -52,6 +54,42 @@ function ProfileSettingsPage({ user, onSave, onCancel }) {
                     onSave(updatedUser);
                 }
             }, 1500);
+
+        } catch (error) {
+            setMessage('Failed to update profile. Please try again.');
+            setLoading(false);
+        }
+        try {
+            id = user.id;
+            const response = await fetch('http://localhost:8000/api/update/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    username, 
+                    email, 
+                    currentPassword,
+                    newPassword,
+                    id
+                })
+            });
+
+
+            const data = await response.json();
+            
+            if (data.success){
+                user.username = data.username;
+                user.email = data.email;
+                setUsername(user.username);
+                setEmail(user.email);
+            }
+            setcurrentPassword('');
+            setnewPassword('');
+            setConfirmPassword('');
+
+            setMessage('Profile updated successfully!');
+            setLoading(false);
 
         } catch (error) {
             setMessage('Failed to update profile. Please try again.');
