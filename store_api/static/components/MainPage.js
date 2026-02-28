@@ -24,39 +24,43 @@ function MainPage({ user, onLogout }) {
 
     const [showCart, setShowCart] = useState(false);
     const [cartCount, setCartCount] = useState(0);
+    const [categories, setCategories] = useState([]);
     
     // Categories data
-    const [categories, setCategories] = useState([
-        { id: 1, name: 'Action', image: '', games: [
-            { id: 1, name: 'Game 1', image: '' },
-            { id: 2, name: 'Game 2', image: '' },
-            { id: 3, name: 'Game 3', image: '' }
-        ]},
-        { id: 2, name: 'Indie', image: '', games: [
-            { id: 4, name: 'Stardew Valley', image: '' },
-            { id: 5, name: 'Disco Elysium', image: '' }
-        ]},
-        { id: 3, name: 'RPG', image: '', games: [
-            { id: 6, name: 'Undertale', image: '' },
-            { id: 7, name: 'Persona 5 Royal', image: '' },
-            { id: 8, name: 'Cyberpunk 2077', image: '' }
-        ]},
-        { id: 4, name: 'Strategy', image: '', games: [
-            { id: 9, name: 'Game 9', image: '' }
-        ]},
-        { id: 5, name: 'Pixel Graphics', image: '', games: [
-            { id: 10, name: 'Under', image: '' },
-            { id: 11, name: 'Game 11', image: '' }
-        ]},
-        { id: 6, name: 'Horror', image: '', games: [
-            { id: 12, name: 'Amnesia: the Dark Descent', image: '' },
-            { id: 13, name: 'Phasmophobia', image: '' }
-        ]},
-        { id: 7, name: 'Metroidvania', image: '', games: [
-            { id: 14, name: 'Hollow Knight', image: '' },
-            { id: 15, name: 'Hollow Knight: Silksong', image: '' }
-        ]}
-    ]);
+    useEffect(() => {
+        const tokenData = JSON.parse(localStorage.getItem('accessToken'));
+        const token = tokenData?.access
+        fetch('/api/products/', {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+        .then(res => res.json())
+        .then(data => {
+            // Group games by genre
+            const grouped = {};
+            data.forEach(game => {
+                if (!grouped[game.genre]) {
+                    grouped[game.genre] = [];
+                }
+                grouped[game.genre].push({
+                    id: game.id,
+                    name: game.title,
+                    image: game.image
+                });
+            });
+
+            // Convert to array matching your existing structure
+            const formatted = Object.entries(grouped).map(([genre, games], index) => ({
+                id: index + 1,
+                name: genre.charAt(0).toUpperCase() + genre.slice(1), // Capitalize
+                image: games[0]?.image || '',  // Use first game's image
+                games: games
+            }));
+
+            setCategories(formatted);
+        })
+        .catch(err => console.error('Error fetching products:', err));
+    }, []);
     
     const [sortOrder, setSortOrder] = useState('default');
 
