@@ -3,6 +3,7 @@ REQUIRED
 	pip install djangorestframework
 	pip install django-cors-headers
 	pip install djangorestframework-simplejwt
+	pip install Pillow
 	SQLite
 
 postman for back testing - https://identity.getpostman.com/signup?continue=https%3A%2F%2Fgo.postman.co%2Fhome&authFlowId=adbf7fe3-9cbf-448e-a50b-010d2a604291
