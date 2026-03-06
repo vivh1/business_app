@@ -10,11 +10,12 @@ from .serializers import ProductDetailSerializer, ProductSerializer
 from .repositories import ProductRepository, CategoryRepository
 from .services import ProductService, CategoryService
 
-product_repository = ProductRepository()
-product_service = ProductService(product_repository)
-
 category_repository = CategoryRepository()
 category_service = CategoryService(category_repository)
+
+product_repository = ProductRepository()
+product_service = ProductService(product_repository,category_repository)
+
 
 class ProductListCreate(generics.ListCreateAPIView):
     queryset = Product.objects.all()
@@ -90,8 +91,8 @@ def update_product(request):
         )
     
     game_id = data.get("id")
-    new_name = data.get("name")
-    new_category = data.get("category")
+    new_name = data.get("title")
+    new_category = data.get("genre")
     new_description = data.get("description")
     new_developer = data.get("developer")
     new_release_date = data.get("release_date")

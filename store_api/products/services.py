@@ -3,8 +3,9 @@ from .models import Product
 
 class ProductService:
 
-    def __init__(self, product_repository):
+    def __init__(self, product_repository,category_repository):
         self.product_repository = product_repository
+        self.category_repository = category_repository
 
     def get_all_products(self):
         return self.product_repository.get_all_products()
@@ -17,11 +18,14 @@ class ProductService:
 
         if not product:
             return None
-        
+
         if new_name is not None:
             product.title = new_name
         if new_category is not None:
-            product.genre = new_category
+            category = self.category_repository.get_by_name(new_category)
+            if not category:
+                category = self.category_repository.add_category(new_category)  # create if not found
+            product.genre = category
         if new_description is not None:
             product.description = new_description
         if new_developer is not None:
@@ -74,3 +78,6 @@ class CategoryService:
         if category:
             return category.name
         return None
+    
+    def add_category(self, name):
+        return self.category_repository.add_category(name)

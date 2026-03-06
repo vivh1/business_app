@@ -26,6 +26,12 @@ class CategoryRepository:
         except Category.DoesNotExist:
             return None
         
+    def get_by_name(self, name):
+        try:
+            return Category.objects.get(name=name)
+        except Category.DoesNotExist:
+            return None
+        
     def save(self, category):
         category.save()
 
