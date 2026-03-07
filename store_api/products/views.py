@@ -217,3 +217,52 @@ def add_category(request):
         {"success": True, "message": "Category added successfully"},
         status=200
     )
+
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def add_product(request):
+    if request.method != 'POST':
+        return Response(
+            {"success": False, "message": "Method not allowed"},
+            status=405
+        )
+    
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return Response(
+            {"success": False, "message": "Invalid JSON"},
+            status=400
+        )
+    
+    title = data.get("title")
+    genre = data.get("genre")
+    description = data.get("description")
+    developer = data.get("developer")
+    release_date = data.get("release_date")
+    image = data.get("image")
+    quantity=data.get("quantity")
+
+    if not title or not genre or not description or not developer or not release_date or not image:
+        return Response(
+            {"success": False, "message": "Missing required fields"},
+            status=400
+        )
+    
+    if product_service.get_by_name(title):
+        return Response(
+            {"success": False, "message": "Product already exists"},
+            status=400
+        )
+
+    product = product_service.add_product(title, genre, description, developer, release_date, image,quantity)
+
+    if not product:
+        return Response(
+            {"success": False, "message": "Product not added"},
+            status=400
+        )
+    
+    serializer = ProductDetailSerializer(product, context={'request': request})
+    return Response(serializer.data)

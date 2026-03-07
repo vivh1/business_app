@@ -12,6 +12,12 @@ class ProductRepository:
         except Product.DoesNotExist:
             return None
         
+    def get_by_name(self, name):
+        try:
+            return Product.objects.get(title=name)
+        except Product.DoesNotExist:
+            return None
+        
     def save(self, product):
         product.save()
 
