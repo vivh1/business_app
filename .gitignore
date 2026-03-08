@@ -8,3 +8,7 @@ __pycache__/
 
 # Virtual Environment
 venv/
+env/
+
+# Media folder
+media/
