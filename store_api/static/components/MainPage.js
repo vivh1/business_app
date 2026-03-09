@@ -103,8 +103,9 @@ function MainPage({ user, onLogout }) {
     };
     const handleSaveProfile = (updatedUser) => {
         localStorage.setItem('user', JSON.stringify(updatedUser));
-        alert('Profile updated successfully!');
-        window.location.reload();
+        setTimeout(() => {
+            onLogout();
+        }, 3000); 
     };
 
     const handleSortChange = (order) => {
