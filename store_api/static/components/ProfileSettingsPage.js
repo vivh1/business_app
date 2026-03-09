@@ -192,7 +192,7 @@ function ProfileSettingsPage({ user, onSave, onCancel }) {
                     <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', justifyContent: 'flex-end' }}>
                         <button 
                             type="button" 
-                            className="cancel-btn"
+                            className="btn-cancel"
                             onClick={onCancel}
                             disabled={loading}
                             style={{ padding: '0.75rem 1.5rem' }}
@@ -201,7 +201,7 @@ function ProfileSettingsPage({ user, onSave, onCancel }) {
                         </button>
                         <button 
                             type="submit" 
-                            className="save-btn"
+                            className="btn-save"
                             disabled={loading}
                             style={{ padding: '0.75rem 1.5rem' }}
                         >
