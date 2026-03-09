@@ -1,5 +1,5 @@
 # Database
-store_api/db.sqlite3
+#store_api/db.sqlite3
 store_api/sqlite3.exe
 
 # Python cache
