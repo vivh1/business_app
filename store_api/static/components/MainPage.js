@@ -313,8 +313,7 @@ function MainPage({ user, onLogout }) {
         
         // Check if game already in cart
         const existingItemIndex = existingCart.findIndex(item => 
-            item.id === gameWithDetails.id && 
-            item.platform === gameWithDetails.platform
+            item.id === gameWithDetails.id
         );
         
         if (existingItemIndex >= 0) {

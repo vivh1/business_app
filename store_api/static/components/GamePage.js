@@ -3,7 +3,6 @@ const { useState } = React;
 function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame }) {
     const [quantity, setQuantity] = useState(1);
     const [addedToCart, setAddedToCart] = useState(false);
-    const [selectedPlatform, setSelectedPlatform] = useState(game.platform || "PC");
     
     // Editing states
     const [editingDescription, setEditingDescription] = useState(false);
@@ -11,7 +10,6 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
     const [editingReleaseDate, setEditingReleaseDate] = useState(false);
     const [editingDeveloper, setEditingDeveloper] = useState(false);
     const [editingPublisher, setEditingPublisher] = useState(false);
-    const [editingPlatform, setEditingPlatform] = useState(false);
     const [editingGenre, setEditingGenre] = useState(false);
     
     // Temp values for editing
@@ -20,14 +18,11 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
     const [tempReleaseDate, setTempReleaseDate] = useState(game.releaseDate || "TBA");
     const [tempDeveloper, setTempDeveloper] = useState(game.developer || "Unknown");
     const [tempPublisher, setTempPublisher] = useState(game.publisher || "Unknown");
-    const [tempPlatform, setTempPlatform] = useState(game.platform || "PC");
     const [tempGenre, setTempGenre] = useState(game.genre || categoryName);
 
     const [editingImage, setEditingImage] = useState(false);
     const [tempImage, setTempImage] = useState(game.image || "");
     const [imageFile, setImageFile] = useState(null);
-
-    const platformOptions = ["PC", "XBOX", "PlayStation 4", "PlayStation 5", "Nintendo Switch", "Mobile"];
 
     const handleQuantityChange = (e) => {
         const value = parseInt(e.target.value);
@@ -41,7 +36,6 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
             ...game,
             categoryName,
             quantity,
-            platform: selectedPlatform
         });
         setAddedToCart(true);
         setTimeout(() => setAddedToCart(false), 2000);
@@ -75,13 +69,6 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
         onUpdateGame(game.categoryId, game.id, { publisher: tempPublisher });
         game.publisher = tempPublisher;
         setEditingPublisher(false);
-    };
-
-    const handleSavePlatform = () => {
-        onUpdateGame(game.categoryId, game.id, { platform: tempPlatform });
-        game.platform = tempPlatform;
-        setSelectedPlatform(tempPlatform);
-        setEditingPlatform(false);
     };
 
     const handleImageChange = (e) => {
@@ -282,22 +269,6 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
                                     )}
                                 </div>
                                 
-                                {/* Platform Selector - For everyone */}
-                                <div className="game-details-section">
-                                    <h3 className="game-details-section-title">Platform</h3>
-                                    <div className="platform-selector">
-                                        <select 
-                                            className="platform-select"
-                                            value={selectedPlatform}
-                                            onChange={(e) => setSelectedPlatform(e.target.value)}
-                                        >
-                                            {platformOptions.map(platform => (
-                                                <option key={platform} value={platform}>{platform}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
-                                
                                 {/* Quantity and Add to Cart */}
                                 <div className="game-details-section">
                                     <h3 className="game-details-section-title">Purchase</h3>
@@ -387,29 +358,6 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
                                                 </span>
                                             ) : (
                                                 <span>{game.publisher || "Unknown"}</span>
-                                            )}
-                                        </li>
-                                        <li>
-                                            <strong>Platform:</strong>
-                                            {user?.is_admin && !editingPlatform && (
-                                                <button className="inline-edit-btn" onClick={() => setEditingPlatform(true)}>Edit</button>
-                                            )}
-                                            {editingPlatform ? (
-                                                <span className="inline-edit">
-                                                    <select
-                                                        className="inline-select"
-                                                        defaultValue={game.platform || "PC"}
-                                                        onChange={(e) => setTempPlatform(e.target.value)}
-                                                    >
-                                                        {platformOptions.map(p => (
-                                                            <option key={p} value={p}>{p}</option>
-                                                        ))}
-                                                    </select>
-                                                    <button className="inline-save" onClick={handleSavePlatform}>✓</button>
-                                                    <button className="inline-cancel" onClick={() => setEditingPlatform(false)}>✗</button>
-                                                </span>
-                                            ) : (
-                                                <span>{game.platform || "PC"}</span>
                                             )}
                                         </li>
                                         <li>
