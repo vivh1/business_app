@@ -36,7 +36,7 @@ def list_products(request):
         )
     
     products = product_repository.get_all_products()
-    serializer = ProductSerializer(products, many=True, context={'request': request})
+    serializer = ProductDetailSerializer(products, many=True, context={'request': request}) # Changed from ProductSerializer to ProductDetailSerializer thx - Cyel
     return Response(serializer.data)
 
 @csrf_exempt
