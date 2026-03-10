@@ -8,8 +8,23 @@ function App() {
         // Don't save to localStorage
     };
 
-    const handleLogout = () => {
-        setCurrentUser(null);
+    const handleLogout = async () => {
+        try {
+            const token = JSON.parse(localStorage.getItem('accessToken')).access;
+            await fetch('http://localhost:8000/api/logout/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+        } catch (error) {
+            console.log('logout error:', error);
+        } finally {
+            setCurrentUser(null);
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('user');
+        }
     };
 
     return (

@@ -5,16 +5,17 @@ function ManageUsersPage({ onDeleteUser, currentUser }) {
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState('');
 
-    useEffect(() => {
-        fetchUsers();
-    }, []);
-
     const fetchUsers = async () => {
         try {
+            //const token = JSON.parse(localStorage.getItem('accessToken')).access;
+
             setLoading(true);
             const response = await fetch('http://localhost:8000/api/users/', {
                 method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 
+                    'Content-Type': 'application/json',
+                    //'Authorization': `Bearer  ${token}`
+                 }
             });
             
             if (response.ok) {
@@ -24,11 +25,16 @@ function ManageUsersPage({ onDeleteUser, currentUser }) {
                 setMessage('Failed to load users');
             }
         } catch (error) {
+            console.log('error:', error);
             setMessage('Cannot connect to server to fetch users');
         } finally {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchUsers();
+    }, []);
 
     const handleDelete = async (userId) => {
         if (window.confirm('Are you sure you want to delete this user?')) {

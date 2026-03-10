@@ -46,8 +46,15 @@ function ProfileSettingsPage({ user, onSave, onCancel }) {
         }
 
         try {
-            const tokenData = JSON.parse(localStorage.getItem('accessToken'));
-            const token = tokenData?.access;
+            const tokenData = localStorage.getItem('accessToken');
+            // Handle both plain string and JSON object formats
+            let token;
+            try {
+                const parsed = JSON.parse(tokenData);
+                token = parsed?.access || parsed;
+            } catch {
+                token = tokenData;
+            }
 
             const response = await fetch('http://localhost:8000/api/update/', {
                 method: 'POST',
@@ -192,7 +199,7 @@ function ProfileSettingsPage({ user, onSave, onCancel }) {
                     <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', justifyContent: 'flex-end' }}>
                         <button 
                             type="button" 
-                            className="btn-cancel"
+                            className="cancel-btn"
                             onClick={onCancel}
                             disabled={loading}
                             style={{ padding: '0.75rem 1.5rem' }}
@@ -201,7 +208,7 @@ function ProfileSettingsPage({ user, onSave, onCancel }) {
                         </button>
                         <button 
                             type="submit" 
-                            className="btn-save"
+                            className="save-btn"
                             disabled={loading}
                             style={{ padding: '0.75rem 1.5rem' }}
                         >
