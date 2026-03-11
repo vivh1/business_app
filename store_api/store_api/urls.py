@@ -30,6 +30,8 @@ urlpatterns = [
 
     path('api/', include('cart.urls')),
 
+    path('api/', include('orders.urls')),
+
     # home test endpoint after login
     path('home/', home),
 

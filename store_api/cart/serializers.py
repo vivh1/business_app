@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CartItem, Order, OrderItem
+from .models import CartItem
 from products.models import Product
 
 
@@ -24,19 +24,3 @@ class CartItemSerializer(serializers.ModelSerializer):
         if obj.product.image and request:
             return request.build_absolute_uri(obj.product.image.url)
         return None
-
-
-class OrderItemSerializer(serializers.ModelSerializer):
-    product_title = serializers.CharField(source='product.title', read_only=True)
-
-    class Meta:
-        model = OrderItem
-        fields = ['id', 'product', 'product_title', 'quantity', 'price_at_purchase']
-
-
-class OrderSerializer(serializers.ModelSerializer):
-    items = OrderItemSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Order
-        fields = ['id', 'created_at', 'status', 'total_price', 'items']
