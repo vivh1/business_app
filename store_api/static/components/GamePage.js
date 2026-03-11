@@ -9,19 +9,16 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
     const [editingPrice, setEditingPrice] = useState(false);
     const [editingReleaseDate, setEditingReleaseDate] = useState(false);
     const [editingDeveloper, setEditingDeveloper] = useState(false);
-    const [editingPublisher, setEditingPublisher] = useState(false);
     const [editingGenre, setEditingGenre] = useState(false);
-    
-    // Temp values for editing
-    const [tempDescription, setTempDescription] = useState(game.description || "");
-    const [tempPrice, setTempPrice] = useState(game.price || "29.99");
-    const [tempReleaseDate, setTempReleaseDate] = useState(game.releaseDate || "TBA");
-    const [tempDeveloper, setTempDeveloper] = useState(game.developer || "Unknown");
-    const [tempPublisher, setTempPublisher] = useState(game.publisher || "Unknown");
-    const [tempGenre, setTempGenre] = useState(game.genre || categoryName);
-
     const [editingImage, setEditingImage] = useState(false);
-    const [tempImage, setTempImage] = useState(game.image || "");
+    
+    // Temp values were here before, now I still use them to initialize data cause I was too lazy to change all the names
+    const [tempDescription, setTempDescription] = useState(game.description);
+    const [tempPrice, setTempPrice] = useState(game.price);
+    const [tempReleaseDate, setTempReleaseDate] = useState(game.release_date);
+    const [tempDeveloper, setTempDeveloper] = useState(game.developer);
+    const [tempGenre, setTempGenre] = useState(game.genre);
+    const [tempImage, setTempImage] = useState(game.image);
     const [imageFile, setImageFile] = useState(null);
 
     const handleQuantityChange = (e) => {
@@ -42,33 +39,28 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
     };
 
     const handleSaveDescription = () => {
-        onUpdateGame(game.categoryId, game.id, { description: tempDescription });
-        game.description = tempDescription;
+        onUpdateGame(game.id, { description: tempDescription });
         setEditingDescription(false);
     };
 
     const handleSavePrice = () => {
-        onUpdateGame(game.categoryId, game.id, { price: tempPrice });
-        game.price = tempPrice;
+        onUpdateGame(game.id, { price: tempPrice });
         setEditingPrice(false);
     };
 
     const handleSaveReleaseDate = () => {
-        onUpdateGame(game.categoryId, game.id, { releaseDate: tempReleaseDate });
-        game.releaseDate = tempReleaseDate;
+        onUpdateGame(game.id, { release_date: tempReleaseDate });
         setEditingReleaseDate(false);
     };
 
     const handleSaveDeveloper = () => {
-        onUpdateGame(game.categoryId, game.id, { developer: tempDeveloper });
-        game.developer = tempDeveloper;
+        onUpdateGame(game.id, { developer: tempDeveloper });
         setEditingDeveloper(false);
     };
 
-    const handleSavePublisher = () => {
-        onUpdateGame(game.categoryId, game.id, { publisher: tempPublisher });
-        game.publisher = tempPublisher;
-        setEditingPublisher(false);
+    const handleSaveGenre = () => {
+        onUpdateGame(game.id, { genre: tempGenre });
+        setEditingGenre(false);
     };
 
     const handleImageChange = (e) => {
@@ -84,26 +76,16 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
     };
 
     const handleSaveImage = () => {
-        onUpdateGame(game.categoryId, game.id, { image: tempImage });
-        game.image = tempImage;
+        onUpdateGame(game.id, { image: tempImage });
         setEditingImage(false);
         setImageFile(null);
     };
 
     const handleRemoveImage = () => {
         setTempImage("");
-        if (onUpdateGame) {
-            onUpdateGame(game.categoryId, game.id, { image: "" });
-        }
-        game.image = "";
+        onUpdateGame(game.id, { image: "" });
         setEditingImage(false);
         setImageFile(null);
-    };
-
-    const handleSaveGenre = () => {
-        onUpdateGame(game.categoryId, game.id, { genre: tempGenre });
-        game.genre = tempGenre;
-        setEditingGenre(false);
     };
 
     return (
@@ -129,10 +111,10 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
                                         <div className="image-edit-section">
                                             <div className="game-details-image">
                                                 {tempImage ? (
-                                                    <img src={tempImage} alt={game.name} className="game-image-preview" />
+                                                    <img src={tempImage} alt={game.title} className="game-image-preview" />
                                                 ) : (
                                                     <div className="game-details-image-placeholder">
-                                                        [No Image]
+                                                        No Image
                                                     </div>
                                                 )}
                                             </div>
@@ -162,7 +144,7 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
                                                     <button className="btn-save" onClick={handleSaveImage}>Save</button>
                                                     <button className="btn-cancel" onClick={() => {
                                                         setEditingImage(false);
-                                                        setTempImage(game.image || "");
+                                                        setTempImage(game.image);
                                                         setImageFile(null);
                                                     }}>Cancel</button>
                                                 </div>
@@ -172,15 +154,14 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
                                         <>
                                             <div className="game-details-image">
                                                 {game.image ? (
-                                                    <img src={game.image} alt={game.name} className="game-image-display" />
+                                                    <img src={game.image} alt={game.title} className="game-image-display" />
                                                 ) : (
                                                     <div className="game-details-image-placeholder">
-                                                        [Image: {game.image || "No Image"}]
+                                                        No Image
                                                     </div>
                                                 )}
                                             </div>
                                             
-                                            {/* Image Edit Button - Between Image and Description */}
                                             {user?.is_admin && !editingImage && (
                                                 <div className="image-edit-button-container">
                                                     <button 
@@ -195,7 +176,7 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
                                     )}
                                 </div>
                                 
-                                {/* Description Section - Now restored */}
+                                {/* Description Section */}
                                 <div className="game-details-section">
                                     <div className="section-header">
                                         <h3 className="game-details-section-title">Description</h3>
@@ -213,7 +194,7 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
                                         <div className="edit-section">
                                             <textarea
                                                 className="edit-textarea"
-                                                defaultValue={game.description || ""}
+                                                value={tempDescription}
                                                 onChange={(e) => setTempDescription(e.target.value)}
                                             />
                                             <div className="edit-actions">
@@ -223,7 +204,7 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
                                         </div>
                                     ) : (
                                         <p className="game-details-description">
-                                            {game.description || "No description available for this game."}
+                                            {game.description}
                                         </p>
                                     )}
                                 </div>
@@ -231,7 +212,7 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
                             
                             {/* Right Column - Details */}
                             <div className="game-details-right">
-                                <h1 className="game-details-title">{game.name}</h1>
+                                <h1 className="game-details-title">{game.title}</h1>
                                 
                                 <div className="game-details-meta">
                                     <span className="game-details-category">
@@ -254,9 +235,10 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
                                     {editingPrice ? (
                                         <div className="edit-section">
                                             <input
-                                                type="text"
+                                                type="number"
+                                                step="0.01"
                                                 className="edit-input"
-                                                defaultValue={game.price || "29.99"}
+                                                value={tempPrice}
                                                 onChange={(e) => setTempPrice(e.target.value)}
                                             />
                                             <div className="edit-actions">
@@ -265,8 +247,16 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="game-details-price">${game.price || "29.99"}</div>
+                                        <div className="game-details-price">${parseFloat(game.price).toFixed(2)}</div>
                                     )}
+                                </div>
+                                
+                                {/* Stock Quantity Display */}
+                                <div className="game-details-section">
+                                    <h3 className="game-details-section-title">Availability</h3>
+                                    <p className="game-details-stock">
+                                        {game.quantity > 0 ? `${game.quantity} units in stock` : 'Out of stock'}
+                                    </p>
                                 </div>
                                 
                                 {/* Quantity and Add to Cart */}
@@ -279,15 +269,18 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
                                                 type="number"
                                                 id="quantity"
                                                 min="1"
+                                                max={game.quantity || 1}
                                                 value={quantity}
                                                 onChange={handleQuantityChange}
                                                 className="quantity-input"
+                                                disabled={!game.quantity || game.quantity === 0}
                                             />
                                         </div>
                                         
                                         <button 
                                             className={`add-to-cart-btn ${addedToCart ? 'added' : ''}`}
                                             onClick={handleAddToCart}
+                                            disabled={!game.quantity || game.quantity === 0}
                                         >
                                             {addedToCart ? '✓ Added to Cart!' : 'Add to Cart'}
                                         </button>
@@ -308,16 +301,16 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
                                             {editingReleaseDate ? (
                                                 <span className="inline-edit">
                                                     <input
-                                                        type="text"
+                                                        type="date"
                                                         className="inline-input"
-                                                        defaultValue={game.releaseDate || "TBA"}
+                                                        value={tempReleaseDate}
                                                         onChange={(e) => setTempReleaseDate(e.target.value)}
                                                     />
                                                     <button className="inline-save" onClick={handleSaveReleaseDate}>✓</button>
                                                     <button className="inline-cancel" onClick={() => setEditingReleaseDate(false)}>✗</button>
                                                 </span>
                                             ) : (
-                                                <span>{game.releaseDate || "TBA"}</span>
+                                                <span>{game.release_date}</span>
                                             )}
                                         </li>
                                         <li>
@@ -330,34 +323,14 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
                                                     <input
                                                         type="text"
                                                         className="inline-input"
-                                                        defaultValue={game.developer || "Unknown"}
+                                                        value={tempDeveloper}
                                                         onChange={(e) => setTempDeveloper(e.target.value)}
                                                     />
                                                     <button className="inline-save" onClick={handleSaveDeveloper}>✓</button>
                                                     <button className="inline-cancel" onClick={() => setEditingDeveloper(false)}>✗</button>
                                                 </span>
                                             ) : (
-                                                <span>{game.developer || "Unknown"}</span>
-                                            )}
-                                        </li>
-                                        <li>
-                                            <strong>Publisher:</strong>
-                                            {user?.is_admin && !editingPublisher && (
-                                                <button className="inline-edit-btn" onClick={() => setEditingPublisher(true)}>Edit</button>
-                                            )}
-                                            {editingPublisher ? (
-                                                <span className="inline-edit">
-                                                    <input
-                                                        type="text"
-                                                        className="inline-input"
-                                                        defaultValue={game.publisher || "Unknown"}
-                                                        onChange={(e) => setTempPublisher(e.target.value)}
-                                                    />
-                                                    <button className="inline-save" onClick={handleSavePublisher}>✓</button>
-                                                    <button className="inline-cancel" onClick={() => setEditingPublisher(false)}>✗</button>
-                                                </span>
-                                            ) : (
-                                                <span>{game.publisher || "Unknown"}</span>
+                                                <span>{game.developer}</span>
                                             )}
                                         </li>
                                         <li>
@@ -370,14 +343,14 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
                                                     <input
                                                         type="text"
                                                         className="inline-input"
-                                                        defaultValue={game.genre || categoryName}
+                                                        value={tempGenre}
                                                         onChange={(e) => setTempGenre(e.target.value)}
                                                     />
                                                     <button className="inline-save" onClick={handleSaveGenre}>✓</button>
                                                     <button className="inline-cancel" onClick={() => setEditingGenre(false)}>✗</button>
                                                 </span>
                                             ) : (
-                                                <span>{game.genre || categoryName}</span>
+                                                <span>{game.genre}</span>
                                             )}
                                         </li>
                                     </ul>

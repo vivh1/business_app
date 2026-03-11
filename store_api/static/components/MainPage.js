@@ -12,7 +12,7 @@ function MainPage({ user, onLogout }) {
     const [newCategoryImage, setNewCategoryImage] = useState('');
     const [editingCategory, setEditingCategory] = useState(null);
     const [editingGame, setEditingGame] = useState(null);
-    const [showAddGame, setShowAddGame] = useState(false);
+    const [showAddGamePage, setShowAddGamePage] = useState(false);
     const [newGameName, setNewGameName] = useState('');
     const [newGameImage, setNewGameImage] = useState('');
 
@@ -28,38 +28,64 @@ function MainPage({ user, onLogout }) {
     
     // Categories data
     useEffect(() => {
-        const tokenData = JSON.parse(localStorage.getItem('accessToken'));
-        const token = tokenData?.access
-        fetch('/api/products/', {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
-        .then(res => res.json())
-        .then(data => {
-            // Group games by genre
-            const grouped = {};
-            data.forEach(game => {
-                if (!grouped[game.genre]) {
-                    grouped[game.genre] = [];
-                }
-                grouped[game.genre].push({
-                    id: game.id,
-                    name: game.title,
-                    image: game.image
+        const fetchProducts = async () => {
+            try {
+                const tokenData = JSON.parse(localStorage.getItem('accessToken'));
+                const token = tokenData?.access;
+                
+                const response = await fetch('http://localhost:8000/api/products/', {
+                    method: 'GET',
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
                 });
-            });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch products');
+                }
+                
+                const data = await response.json();
+                
+                // Group games by genre/category
+                const grouped = {};
+                data.forEach(game => {
+                    const categoryName = game.genre || 'Uncategorized';
+                    
+                    if (!grouped[categoryName]) {
+                        grouped[categoryName] = [];
+                    }
+                    
+                    grouped[categoryName].push({
+                        id: game.id,
+                        title: game.title,
+                        name: game.title,
+                        image: game.image,
+                        description: game.description,
+                        price: game.price,
+                        release_date: game.release_date,
+                        developer: game.developer,
+                        genre: game.genre,
+                        quantity: game.quantity
+                    });
+                });
 
-            // Convert to array matching your existing structure
-            const formatted = Object.entries(grouped).map(([genre, games], index) => ({
-                id: index + 1,
-                name: genre.charAt(0).toUpperCase() + genre.slice(1), // Capitalize
-                image: games[0]?.image || '',  // Use first game's image
-                games: games
-            }));
+                // Convert to array
+                const formatted = Object.entries(grouped).map(([genre, games], index) => ({
+                    id: index + 1,
+                    name: genre,
+                    image: games[0]?.image || '',
+                    games: games
+                }));
 
-            setCategories(formatted);
-        })
-        .catch(err => console.error('Error fetching products:', err));
+                setCategories(formatted);
+            } catch (err) {
+                console.error('Error fetching products:', err);
+                setCategories([]);
+            }
+        };
+
+        fetchProducts();
     }, []);
     
     const [sortOrder, setSortOrder] = useState('default');
@@ -101,11 +127,12 @@ function MainPage({ user, onLogout }) {
     const handleBackFromCart = () => {
         setShowCart(false);
     };
+
     const handleSaveProfile = (updatedUser) => {
         localStorage.setItem('user', JSON.stringify(updatedUser));
         setTimeout(() => {
             onLogout();
-        }, 3000); 
+        }, 1500);
     };
 
     const handleSortChange = (order) => {
@@ -129,9 +156,9 @@ function MainPage({ user, onLogout }) {
     const getSortedGames = (games) => {
         let sorted = [...games];
         if (sortOrder === 'asc') {
-            sorted.sort((a, b) => a.name.localeCompare(b.name));
+            sorted.sort((a, b) => a.title.localeCompare(b.title));
         } else if (sortOrder === 'desc') {
-            sorted.sort((a, b) => b.name.localeCompare(a.name));
+            sorted.sort((a, b) => b.title.localeCompare(a.title));
         }
         return sorted;
     };
@@ -149,7 +176,7 @@ function MainPage({ user, onLogout }) {
         const results = [];
         categories.forEach(category => {
             category.games.forEach(game => {
-                if (game.name.toLowerCase().includes(query.toLowerCase())) {
+                if (game.title.toLowerCase().includes(query.toLowerCase())) {
                     results.push({
                         ...game,
                         categoryName: category.name,
@@ -164,7 +191,6 @@ function MainPage({ user, onLogout }) {
     };
 
     const handleSearchResultClick = (game, categoryId) => {
-    // Find the category and set it as selected
         const category = categories.find(c => c.id === categoryId);
         if (category) {
             setSelectedCategory(category);
@@ -212,50 +238,59 @@ function MainPage({ user, onLogout }) {
     };
 
     // Game functions (Admin only)
-    const handleAddGame = (categoryId) => {
-        if (!user.is_admin) return;
-        if (newGameName.trim()) {
-            const category = categories.find(c => c.id === categoryId);
-            const newId = Math.max(...category.games.map(g => g.id), 0) + 1;
-            const newGame = {
-                id: newId,
-                name: newGameName,
-                image: newGameImage
-            };
-            
-            setCategories(categories.map(c => 
-                c.id === categoryId 
-                    ? { ...c, games: [...c.games, newGame] } 
-                    : c
-            ));
-            
-            if (selectedCategory && selectedCategory.id === categoryId) {
-                setSelectedCategory({
-                    ...selectedCategory,
-                    games: [...selectedCategory.games, newGame]
-                });
-            }
-            
-            setNewGameName('');
-            setNewGameImage('');
-            setShowAddGame(false);
-        }
+    const handleAddGameClick = () => {
+        setShowAddGamePage(true);
     };
 
-    const handleDeleteGame = (categoryId, gameId) => {
+    const handleBackFromAddGame = () => {
+        setShowAddGamePage(false);
+    };
+
+    const handleGameAdded = (newGame) => {
+        // Refresh current category games
+        if (selectedCategory) {
+            setSelectedCategory({
+                ...selectedCategory,
+                games: [...selectedCategory.games, newGame]
+            });
+        }
+        setShowAddGamePage(false);
+    };
+
+    const handleDeleteGame = async (categoryId, gameId) => {
         if (!user.is_admin) return;
         if (window.confirm('Are you sure you want to delete this game?')) {
-            setCategories(categories.map(c => 
-                c.id === categoryId 
-                    ? { ...c, games: c.games.filter(g => g.id !== gameId) } 
-                    : c
-            ));
-            
-            if (selectedCategory && selectedCategory.id === categoryId) {
-                setSelectedCategory({
-                    ...selectedCategory,
-                    games: selectedCategory.games.filter(g => g.id !== gameId)
+            try {
+                const tokenData = JSON.parse(localStorage.getItem('accessToken'));
+                const token = tokenData?.access;
+                
+                const response = await fetch('http://localhost:8000/api/delete_product/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ id: gameId })
                 });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    setCategories(categories.map(c => 
+                        c.id === categoryId 
+                            ? { ...c, games: c.games.filter(g => g.id !== gameId) } 
+                            : c
+                    ));
+                    
+                    if (selectedCategory && selectedCategory.id === categoryId) {
+                        setSelectedCategory({
+                            ...selectedCategory,
+                            games: selectedCategory.games.filter(g => g.id !== gameId)
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error deleting game:', error);
             }
         }
     };
@@ -263,28 +298,17 @@ function MainPage({ user, onLogout }) {
     const handleRenameGame = (categoryId, gameId, newName) => {
         if (!user.is_admin) return;
         if (newName.trim()) {
-            setCategories(categories.map(c => 
-                c.id === categoryId 
-                    ? { ...c, games: c.games.map(g => 
-                        g.id === gameId ? { ...g, name: newName } : g
-                    )} 
-                    : c
-            ));
-            
-            if (selectedCategory && selectedCategory.id === categoryId) {
-                setSelectedCategory({
-                    ...selectedCategory,
-                    games: selectedCategory.games.map(g =>
-                        g.id === gameId ? { ...g, name: newName } : g
-                    )
-                });
-            }
+            handleUpdateGame(categoryId, gameId, { title: newName });
         }
         setEditingGame(null);
     };
 
-    const handleUpdateGame = (categoryId, gameId, updatedFields) => {
+    const handleUpdateGame = async (categoryId, gameId, updatedFields) => {
         if (!user.admin) return;
+        
+        console.log('Updating game:', { categoryId, gameId, updatedFields });
+        
+        // Immediate upload for responsiveness
         setCategories(categories.map(c => 
             c.id === categoryId 
                 ? { ...c, games: c.games.map(g => 
@@ -293,14 +317,49 @@ function MainPage({ user, onLogout }) {
                 : c
         ));
         
-        // Also update selectedGame if it's the current one
+        // Also update selectedGame if it's current one
         if (selectedGame && selectedGame.id === gameId) {
             setSelectedGame({ ...selectedGame, ...updatedFields });
+        }
+        
+        // Send update to backend
+        try {
+            const tokenData = JSON.parse(localStorage.getItem('accessToken'));
+            const token = tokenData?.access;
+            
+            console.log('Token:', token ? 'Exists' : 'Missing');
+            
+            const response = await fetch('http://localhost:8000/api/update_product/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    id: gameId,
+                    ...updatedFields
+                })
+            });
+            
+            console.log('Response status:', response.status);
+            
+            const data = await response.json();
+            console.log('Response data:', data);
+            
+            if (!response.ok) {
+                console.error('Failed to update game:', data.message);
+            } else {
+                console.log('Game updated successfully');
+            }
+        } catch (error) {
+            console.error('Error updating game:', error);
         }
     };
 
     const handleGameClick = (game, category) => {
-        setSelectedGame({ ...game, categoryName: category.name });
+        console.log('Game clicked:', game);
+        console.log('Category:', category);
+        setSelectedGame({ ...game, categoryName: category.name, categoryId: category.id });
     };
 
     const handleBackFromGame = () => {
@@ -308,24 +367,22 @@ function MainPage({ user, onLogout }) {
     };
 
     const handleAddToCart = (gameWithDetails) => {
-        // Get existing cart from localStorage or initialize empty array
         const existingCart = JSON.parse(localStorage.getItem('cart')) || [];
         
-        // Check if game already in cart
         const existingItemIndex = existingCart.findIndex(item => 
             item.id === gameWithDetails.id
         );
         
         if (existingItemIndex >= 0) {
-            // Update quantity if already in cart
             existingCart[existingItemIndex].quantity += gameWithDetails.quantity;
         } else {
-            // Add new item
             existingCart.push(gameWithDetails);
         }
         
-        // Save to localStorage
         localStorage.setItem('cart', JSON.stringify(existingCart));
+        
+        const total = existingCart.reduce((sum, item) => sum + item.quantity, 0);
+        setCartCount(total);
     };
 
     const handleCategoryClick = (category) => {
@@ -349,14 +406,26 @@ function MainPage({ user, onLogout }) {
         setCartCount(cart.reduce((total, item) => total + item.quantity, 0));
     }, []);
 
+    if (showAddGamePage && selectedCategory) {
+        return (
+            <AddGamePage
+                categoryId={selectedCategory.id}
+                categoryName={selectedCategory.name}
+                user={user}
+                onBack={handleBackFromAddGame}
+                onGameAdded={handleGameAdded}
+            />
+        );
+    }
+
     if (showCart) {
         return (
             <CartPage
                 user={user}
                 onBack={handleBackFromCart}
                 onUpdateCart={(cart) => {
-                    // Optional: Update cart count in navbar
-                    console.log('Cart updated:', cart);
+                    const total = cart.reduce((sum, item) => sum + item.quantity, 0);
+                    setCartCount(total);
                 }}
             />
         );
@@ -420,7 +489,7 @@ function MainPage({ user, onLogout }) {
 
     if (selectedCategory) {
         const filteredGames = selectedCategory.games.filter(game => 
-            game.name.toLowerCase().includes(searchQuery.toLowerCase())
+            game.title.toLowerCase().includes(searchQuery.toLowerCase())
         );
 
         return (
@@ -455,7 +524,7 @@ function MainPage({ user, onLogout }) {
                             </div>
 
                             <div className="search-container">
-                                <div className="search-wrapper"></div>
+                                <div className="search-wrapper">
                                     <input
                                         type="text"
                                         className="search-input"
@@ -478,9 +547,8 @@ function MainPage({ user, onLogout }) {
                                             ✕
                                         </button>
                                     )}
+                                </div>
 
-
-                                {/* Search Results Dropdown */}
                                 {showSearchResults && searchResults.length > 0 && (
                                     <div className="search-results">
                                         {searchResults.map((game, index) => (
@@ -489,7 +557,7 @@ function MainPage({ user, onLogout }) {
                                                 className="search-result-item"
                                                 onClick={() => handleSearchResultClick(game, game.categoryId)}
                                             >
-                                                <div className="search-result-name">{game.name}</div>
+                                                <div className="search-result-name">{game.title}</div>
                                                 <div className="search-result-category">
                                                     {game.categoryName}
                                                 </div>
@@ -508,36 +576,12 @@ function MainPage({ user, onLogout }) {
                             {user.is_admin && (
                                 <button 
                                     className="btn-add" 
-                                    onClick={() => setShowAddGame(true)}
+                                    onClick={handleAddGameClick}
                                 >
                                     + Add Game
                                 </button>
                             )}
                         </div>
-
-                        {showAddGame && user.is_admin && (
-                            <div className="add-form-container">
-                                <h3 className="form-title">Add New Game</h3>
-                                <input
-                                    type="text"
-                                    placeholder="Game Name"
-                                    className="form-input"
-                                    value={newGameName}
-                                    onChange={(e) => setNewGameName(e.target.value)}
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Image URL"
-                                    className="form-input"
-                                    value={newGameImage}
-                                    onChange={(e) => setNewGameImage(e.target.value)}
-                                />
-                                <div className="form-buttons">
-                                    <button className="btn-save" onClick={() => handleAddGame(selectedCategory.id)}>Save</button>
-                                    <button className="btn-cancel" onClick={() => setShowAddGame(false)}>Cancel</button>
-                                </div>
-                            </div>
-                        )}
                         
                         {/* Games Grid */}
                         <div className="cards-grid">
@@ -551,7 +595,7 @@ function MainPage({ user, onLogout }) {
                                             <input
                                                 type="text"
                                                 className="edit-input"
-                                                defaultValue={game.name}
+                                                defaultValue={game.title}
                                                 onBlur={(e) => {
                                                     handleRenameGame(selectedCategory.id, game.id, e.target.value);
                                                     setEditingGame(null);
@@ -566,10 +610,9 @@ function MainPage({ user, onLogout }) {
                                                 autoFocus
                                             />
                                         ) : (
-                                            <h3 className="game-name">{game.name}</h3>
+                                            <h3 className="game-name">{game.title}</h3>
                                         )}
                                         
-                                        {/* Admin Controls - Stylish buttons */}
                                         {user.is_admin && (
                                             <div className="game-actions">
                                                 <button 
@@ -595,7 +638,6 @@ function MainPage({ user, onLogout }) {
                                     </div>
                                 </div>
                             ))}
-                            {/* Show message if no games match search */}
                             {filteredGames.length === 0 && searchQuery && (
                                 <div className="no-search-results">
                                     No games found matching "{searchQuery}" in {selectedCategory.name}
@@ -604,9 +646,9 @@ function MainPage({ user, onLogout }) {
                         </div>
                     </div>
                 </div>
-         </div>
-    );
-}
+            </div>
+        );
+    }
 
     const displayedCategories = getFilteredAndSortedCategories();
 
@@ -628,7 +670,6 @@ function MainPage({ user, onLogout }) {
                                 {user.username.charAt(0).toUpperCase()}
                             </div>
 
-                            
                             {showDropdown && (
                                 <div className="dropdown-menu">
                                     <div className="dropdown-item" onClick={handleProfileClick}>
@@ -661,7 +702,6 @@ function MainPage({ user, onLogout }) {
                 <div className="content-wrapper">
                     <h1 className="page-title">Game Categories</h1>
                     
-                    
                     <div className="filters-container">
                         <div className="filter-group">
                             <span className="filter-label">Sort:</span>
@@ -674,73 +714,61 @@ function MainPage({ user, onLogout }) {
                                 <option value="asc">Alphabetical (A-Z)</option>
                                 <option value="desc">Alphabetical (Z-A)</option>
                             </select>
-
-                                {/* Search Bar - Between Sort and Add Category */}
-                            <div className="search-container">
-                                <div className="search-wrapper"></div>
-                                    <input
-                                        type="text"
-                                        className="search-input"
-                                        placeholder="Search for games..."
-                                        value={searchQuery}
-                                        onChange={(e) => handleSearch(e.target.value)}
-                                        onFocus={() => setShowSearchResults(true)}
-                                        onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
-                                    />
-                                
-                                    {searchQuery && (
-                                        <button
-                                            className="search-clear-btn"
-                                            onClick={() => {
-                                                setSearchQuery('');
-                                                setShowSearchResults(false);
-                                            }}
-                                            aria-label="Clear search"
-                                        >
-                                            ✕
-                                        </button>
-                                    )}
-
-
-                                {/* Search Results Dropdown */}
-                                {showSearchResults && searchResults.length > 0 && (
-                                    <div className="search-results">
-                                        {searchResults.map((game, index) => (
-                                            <div
-                                                key={index}
-                                                className="search-result-item"
-                                                onClick={() => {
-                                                    handleSearchResultClick(game, game.categoryId);
-                                                    setShowSearchResults(false);
-                                                }}
-                                            >
-                                                <div className="search-result-name">{game.name}</div>
-                                                <div className="search-result-category">
-                                                    {game.categoryName}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                                
-                                {showSearchResults && searchQuery && searchResults.length === 0 && (
-                                    <div className="no-results">
-                                        No games found matching "{searchQuery}"
-                                    </div>
-                                )}
-                            </div>
-                            
-                            {/* Admin Add Category Button */}
-                            {user.admin && (
-                                <button 
-                                    className="add-category-btn" 
-                                    onClick={() => setShowAddCategory(true)}
-                                >
-                                    + Add Category
-                                </button>
-                            )}
                         </div>
 
+                        <div className="search-container">
+                            <div className="search-wrapper">
+                                <input
+                                    type="text"
+                                    className="search-input"
+                                    placeholder="Search for games..."
+                                    value={searchQuery}
+                                    onChange={(e) => handleSearch(e.target.value)}
+                                    onFocus={() => setShowSearchResults(true)}
+                                    onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
+                                />
+                            
+                                {searchQuery && (
+                                    <button
+                                        className="search-clear-btn"
+                                        onClick={() => {
+                                            setSearchQuery('');
+                                            setShowSearchResults(false);
+                                        }}
+                                        aria-label="Clear search"
+                                    >
+                                        ✕
+                                    </button>
+                                )}
+                            </div>
+
+                            {showSearchResults && searchResults.length > 0 && (
+                                <div className="search-results">
+                                    {searchResults.map((game, index) => (
+                                        <div
+                                            key={index}
+                                            className="search-result-item"
+                                            onClick={() => {
+                                                handleSearchResultClick(game, game.categoryId);
+                                                setShowSearchResults(false);
+                                            }}
+                                        >
+                                            <div className="search-result-name">{game.title}</div>
+                                            <div className="search-result-category">
+                                                {game.categoryName}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            
+                            {showSearchResults && searchQuery && searchResults.length === 0 && (
+                                <div className="no-results">
+                                    No games found matching "{searchQuery}"
+                                </div>
+                            )}
+                        </div>
+                        
                         {user.is_admin && (
                             <button 
                                 className="btn-add" 
@@ -751,7 +779,6 @@ function MainPage({ user, onLogout }) {
                         )}
                     </div>
 
-                    {/* Add Category Form */}
                     {showAddCategory && user.is_admin && (
                         <div className="add-form-container">
                             <h3 className="form-title">Add New Category</h3>
@@ -781,7 +808,7 @@ function MainPage({ user, onLogout }) {
                             .map(category => ({
                                 ...category,
                                 filteredGames: category.games.filter(game => 
-                                    game.name.toLowerCase().includes(searchQuery.toLowerCase())
+                                    game.title.toLowerCase().includes(searchQuery.toLowerCase())
                                 )
                             }))
                             .filter(category => 
@@ -793,9 +820,9 @@ function MainPage({ user, onLogout }) {
                                     className="category-card"
                                     onClick={() => handleCategoryClick(category)}
                                 >
-                                <div className="category-image">
-                                    [Image: {category.image}]
-                                </div>
+                                    <div className="category-image">
+                                        [Image: {category.image}]
+                                    </div>
                                     <div className="category-info" onClick={(e) => e.stopPropagation()}>
                                         {editingCategory === category.id ? (
                                             <input
@@ -815,15 +842,15 @@ function MainPage({ user, onLogout }) {
                                                 onClick={(e) => e.stopPropagation()}
                                                 autoFocus
                                             />
-                            ) : (
-                                        <div className="category-header">
-                                            <h3 className="category-name">{category.name}</h3>
-                                            <span className="game-count">
-                                                {searchQuery ? category.filteredGames.length : category.games.length} games
-                                            </span>
-                                        </div>
-                            )}
-                                    
+                                        ) : (
+                                            <div className="category-header">
+                                                <h3 className="category-name">{category.name}</h3>
+                                                <span className="game-count">
+                                                    {searchQuery ? category.filteredGames.length : category.games.length} games
+                                                </span>
+                                            </div>
+                                        )}
+                                        
                                         {user.is_admin && (
                                             <div className="category-actions">
                                                 <button 
@@ -848,11 +875,10 @@ function MainPage({ user, onLogout }) {
                                         )}
                                     </div>
                                 </div>
-                        ))}
+                            ))}
                     </div>
                 </div>
             </div>
         </div>
-        
     );
 }
