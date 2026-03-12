@@ -17,10 +17,34 @@ function AddGamePage({ categoryId, categoryName, user, onBack, onGameAdded }) {
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
 
-    const genreOptions = [
-        'Action', 'Indie', 'RPG', 'Strategy', 
-        'Pixel Graphics', 'Horror', 'Metroidvania', 'Survival Horror', 'Fantasy'
-    ];
+    const [genreOptions, setGenreOptions] = useState([]);
+
+    useEffect(() => {
+        const fetchGenres = async () => {
+            try {
+                const tokenData = JSON.parse(localStorage.getItem('accessToken'));
+                const token = tokenData?.access;
+
+                const response = await fetch('http://localhost:8000/api/categories/', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setGenreOptions(data);
+                } else {
+                    console.error('Failed to fetch genres:', response.status);
+                }
+            } catch (error) {
+                console.error('Error fetching genres:', error);
+            }
+        };
+
+        fetchGenres();
+    }, []);
+
 
     const handleChange = (e) => {
         const { name, value, type } = e.target;
@@ -73,13 +97,13 @@ function AddGamePage({ categoryId, categoryName, user, onBack, onGameAdded }) {
                 quantity: parseInt(formData.quantity) || 1,
                 release_date: formData.release_date,
                 developer: formData.developer || 'Unknown',
-                genre: formData.genre.toLowerCase(),
+                genre: formData.genre,
                 description: formData.description || '',
                 price: parseFloat(formData.price) || 29.99,
                 image: imagePreview || ''
             });
 
-            const response = await fetch('http://localhost:8000/api/add_product/', {
+            const response = await fetch('http://localhost:8000/api/products/add/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -90,7 +114,7 @@ function AddGamePage({ categoryId, categoryName, user, onBack, onGameAdded }) {
                     quantity: parseInt(formData.quantity) || 1,
                     release_date: formData.release_date,
                     developer: formData.developer || 'Unknown',
-                    genre: formData.genre.toLowerCase(),
+                    genre: formData.genre,
                     description: formData.description || '',
                     price: parseFloat(formData.price) || 29.99,
                     image: imagePreview || ''
@@ -227,8 +251,8 @@ function AddGamePage({ categoryId, categoryName, user, onBack, onGameAdded }) {
                                         >
                                             <option value="">--- Select Genre ---</option>
                                             {genreOptions.map(genre => (
-                                                <option key={genre} value={genre}>
-                                                    {genre}
+                                                <option key={genre.id} value={genre.name}>
+                                                    {genre.name}
                                                 </option>
                                             ))}
                                         </select>

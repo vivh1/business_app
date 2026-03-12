@@ -201,20 +201,51 @@ function MainPage({ user, onLogout }) {
     };
 
     // Category functions (Admin only)
-    const handleAddCategory = () => {
+    const handleAddCategory = async () => {
         if (!user.is_admin) return;
         if (newCategoryName.trim()) {
             const newId = Math.max(...categories.map(c => c.id), 0) + 1;
             const newCategory = {
                 id: newId,
                 name: newCategoryName,
-                image: newCategoryImage,
                 visible: true,
                 games: []
             };
+            try {
+            const tokenData = JSON.parse(localStorage.getItem('accessToken'));
+            const token = tokenData?.access;
+
+            const response = await fetch('http://localhost:8000/api/categories/add/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ name: newCategoryName })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                const newId = Math.max(...categories.map(c => c.id), 0) + 1;
+                const newCategory = {
+                    id: newId,
+                    name: newCategoryName,
+                    image: newCategoryImage || '',
+                    games: []
+                };
+                setCategories([...categories, newCategory]);
+                setNewCategoryName('');
+                setNewCategoryImage('');
+                setShowAddCategory(false);
+            } else {
+                console.error('Failed to add category:', data.message);
+            }
+        } catch (error) {
+                console.error('Error adding category:', error);
+        }
             setCategories([...categories, newCategory]);
             setNewCategoryName('');
-            setNewCategoryImage('');
             setShowAddCategory(false);
         }
     };
@@ -264,7 +295,7 @@ function MainPage({ user, onLogout }) {
                 const tokenData = JSON.parse(localStorage.getItem('accessToken'));
                 const token = tokenData?.access;
                 
-                const response = await fetch('http://localhost:8000/api/delete_product/', {
+                const response = await fetch('http://localhost:8000/api/products/delete/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -303,9 +334,9 @@ function MainPage({ user, onLogout }) {
         setEditingGame(null);
     };
 
-    const handleUpdateGame = async (categoryId, gameId, updatedFields) => {
-        if (!user.admin) return;
-        
+    const handleUpdateGame = async (gameId, updatedFields, categoryId) => {
+        if (!user.is_admin) return;
+
         console.log('Updating game:', { categoryId, gameId, updatedFields });
         
         // Immediate upload for responsiveness
@@ -329,7 +360,7 @@ function MainPage({ user, onLogout }) {
             
             console.log('Token:', token ? 'Exists' : 'Missing');
             
-            const response = await fetch('http://localhost:8000/api/update_product/', {
+            const response = await fetch('http://localhost:8000/api/products/update/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -588,8 +619,16 @@ function MainPage({ user, onLogout }) {
                             {getSortedGames(filteredGames).map(game => (
                                 <div key={game.id} className="game-card" onClick={() => handleGameClick(game, selectedCategory)}>
                                     <div className="game-image">
-                                        [Image: {game.image}]
-                                    </div>
+                                    {game.image ? (
+                                        <img 
+                                            src={game.image}
+                                            alt={game.title} 
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        />
+                                    ) : (
+                                        <span>No Image</span>
+                                    )}
+                                </div>
                                     <div className="game-info" onClick={(e) => e.stopPropagation()}>
                                         {editingGame === game.id ? (
                                             <input
@@ -821,8 +860,16 @@ function MainPage({ user, onLogout }) {
                                     onClick={() => handleCategoryClick(category)}
                                 >
                                     <div className="category-image">
-                                        [Image: {category.image}]
-                                    </div>
+                                    {category.image ? (
+                                        <img 
+                                            src={category.image}
+                                            alt={category.name} 
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        />
+                                    ) : (
+                                        <span>No Image</span>
+                                    )}
+                                </div>
                                     <div className="category-info" onClick={(e) => e.stopPropagation()}>
                                         {editingCategory === category.id ? (
                                             <input

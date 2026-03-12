@@ -1,11 +1,13 @@
-import json
+import json, base64, uuid
 from rest_framework.decorators import api_view, permission_classes
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import generics
 from .models import Product
-from .serializers import ProductDetailSerializer, ProductSerializer
+from .serializers import CategorySerializer, ProductDetailSerializer, ProductSerializer
+from django.core.files.base import ContentFile
+
 
 from .repositories import ProductRepository, CategoryRepository
 from .services import ProductService, CategoryService
@@ -113,6 +115,14 @@ def update_product(request):
             status=404
         )
 
+    image_file = None
+
+    if new_image and new_image.startswith('data:image'):
+        format, imgstr = new_image.split(';base64,')
+        ext = format.split('/')[-1]
+        image_file = ContentFile(base64.b64decode(imgstr), name=f'{uuid.uuid4()}.{ext}')
+
+
     updated_product = product_service.update_product(
     id_in=game_id,
     new_name=new_name,
@@ -120,7 +130,7 @@ def update_product(request):
     new_description=new_description,
     new_developer=new_developer,
     new_release_date=new_release_date,
-    new_image=new_image
+    new_image=image_file
 )
     
     if not updated_product:
@@ -241,10 +251,10 @@ def add_product(request):
     description = data.get("description")
     developer = data.get("developer")
     release_date = data.get("release_date")
-    image = data.get("image")
     quantity=data.get("quantity")
+    image_data = data.get("image")
 
-    if not title or not genre or not description or not developer or not release_date or not image:
+    if not title or not genre or not description or not developer or not release_date or not image_data:
         return Response(
             {"success": False, "message": "Missing required fields"},
             status=400
@@ -255,8 +265,16 @@ def add_product(request):
             {"success": False, "message": "Product already exists"},
             status=400
         )
+    
+    image_file = None
 
-    product = product_service.add_product(title, genre, description, developer, release_date, image,quantity)
+    if image_data and image_data.startswith('data:image'):
+        format, imgstr = image_data.split(';base64,')
+        ext = format.split('/')[-1]
+        image_file = ContentFile(base64.b64decode(imgstr), name=f'{uuid.uuid4()}.{ext}')
+
+
+    product = product_service.add_product(title, genre, description, developer, release_date, image_file,quantity)
 
     if not product:
         return Response(
@@ -266,3 +284,20 @@ def add_product(request):
     
     serializer = ProductDetailSerializer(product, context={'request': request})
     return Response(serializer.data)
+
+@csrf_exempt
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_categories(request):
+    if request.method != 'GET':
+        return Response(
+            {"success": False, "message": "Method not allowed"},
+            status=405
+        )
+    
+    categories = category_repository.get_all_categories()
+    serializer = CategorySerializer(categories, many=True, context={'request': request})
+    return Response(serializer.data)
+
+def delete_category(request):
+    pass

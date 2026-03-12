@@ -154,7 +154,7 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
                                         <>
                                             <div className="game-details-image">
                                                 {game.image ? (
-                                                    <img src={game.image} alt={game.title} className="game-image-display" />
+                                                    <img src={ `http://localhost:8000${game.image}`} alt={game.title} className="game-image-display" />
                                                 ) : (
                                                     <div className="game-details-image-placeholder">
                                                         No Image
