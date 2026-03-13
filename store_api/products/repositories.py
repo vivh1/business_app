@@ -1,4 +1,5 @@
 from .models import Product
+from .models import Category
 
 class ProductRepository:
 
@@ -10,3 +11,37 @@ class ProductRepository:
             return Product.objects.get(id=product_id)
         except Product.DoesNotExist:
             return None
+        
+    def get_by_name(self, name):
+        try:
+            return Product.objects.get(title=name)
+        except Product.DoesNotExist:
+            return None
+        
+    def save(self, product):
+        product.save()
+
+class CategoryRepository:
+    
+    def get_all_categories(self):
+        return Category.objects.all() 
+    
+    def get_by_id(self, category_id):
+        try:
+            return Category.objects.get(id=category_id)
+        except Category.DoesNotExist:
+            return None
+        
+    def get_by_name(self, name):
+        try:
+            return Category.objects.get(name=name)
+        except Category.DoesNotExist:
+            return None
+        
+    def save(self, category):
+        category.save()
+
+    def add_category(self, name):
+        category = Category(name=name)
+        category.save()
+        return category

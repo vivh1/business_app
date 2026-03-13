@@ -25,6 +25,7 @@ function ProfileSettingsPage({ user, onSave, onCancel }) {
         setLoading(true);
         setMessage('');
 
+        // Validation
         if (formData.newPassword && formData.newPassword !== formData.confirmPassword) {
             setMessage('New passwords do not match');
             setLoading(false);
@@ -37,61 +38,71 @@ function ProfileSettingsPage({ user, onSave, onCancel }) {
             return;
         }
 
-        if (formData.newPassword) password = newPassword
-
-        try {
-            setTimeout(() => {
-                const updatedUser = {
-                    ...user,
-                    username: formData.username,
-                    mail: formData.email
-                };
-                
-                setMessage('Profile updated successfully!');
-                setLoading(false);
-                
-                if (onSave) {
-                    onSave(updatedUser);
-                }
-            }, 1500);
-
-        } catch (error) {
-            setMessage('Failed to update profile. Please try again.');
+        // If changing password, current password is required
+        if (formData.newPassword && !formData.currentPassword) {
+            setMessage('Current password is required to set a new password');
             setLoading(false);
+            return;
         }
+
         try {
-            id = user.id;
+            const tokenData = localStorage.getItem('accessToken');
+            // Handle both plain string and JSON object formats
+            let token;
+            try {
+                const parsed = JSON.parse(tokenData);
+                token = parsed?.access || parsed;
+            } catch {
+                token = tokenData;
+            }
+
             const response = await fetch('http://localhost:8000/api/update/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ 
-                    username, 
-                    email, 
-                    currentPassword,
-                    newPassword,
-                    id
+                    username: formData.username,
+                    email: formData.email,
+                    currentPassword: formData.currentPassword,
+                    newPassword: formData.newPassword,
+                    id: user.id
                 })
             });
 
-
             const data = await response.json();
             
-            if (data.success){
-                user.username = data.username;
-                user.email = data.email;
-                setUsername(user.username);
-                setEmail(user.email);
+            if (data.success) {
+                // Update the user object with new data
+                const updatedUser = {
+                    ...user,
+                    username: data.user.username,
+                    email: data.user.email
+                };
+                
+                setMessage('Profile updated successfully!');
+                
+                // Clear password fields
+                setFormData(prev => ({
+                    ...prev,
+                    currentPassword: '',
+                    newPassword: '',
+                    confirmPassword: ''
+                }));
+                
+                // Call onSave with updated user (this will trigger logout in parent)
+                if (onSave) {
+                    onSave(updatedUser);
+                }
+                
+                setLoading(false);
+            } else {
+                setMessage(data.message || 'Failed to update profile');
+                setLoading(false);
             }
-            setcurrentPassword('');
-            setnewPassword('');
-            setConfirmPassword('');
-
-            setMessage('Profile updated successfully!');
-            setLoading(false);
-
         } catch (error) {
+            console.error('Update error:', error);
             setMessage('Failed to update profile. Please try again.');
             setLoading(false);
         }
@@ -180,7 +191,7 @@ function ProfileSettingsPage({ user, onSave, onCancel }) {
                     </div>
                     
                     {message && (
-                        <div className={`message ${message.includes('successfully') ? 'success' : 'error'}`} style={{ marginTop: '1.5rem' }}>
+                        <div className={`message ${message.includes('successfully') ? 'success' : 'error'}`}>
                             {message}
                         </div>
                     )}

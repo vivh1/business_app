@@ -14,11 +14,11 @@ function CartPage({ user, onBack, onUpdateCart }) {
         setLoading(false);
     };
 
-    const updateQuantity = (itemId, platform, newQuantity) => {
+    const updateQuantity = (itemId, newQuantity) => {
         if (newQuantity < 1) return;
         
         const updatedCart = cartItems.map(item => 
-            (item.id === itemId && item.platform === platform) 
+            (item.id === itemId)
                 ? { ...item, quantity: newQuantity } 
                 : item
         );
@@ -28,9 +28,9 @@ function CartPage({ user, onBack, onUpdateCart }) {
         if (onUpdateCart) onUpdateCart(updatedCart);
     };
 
-    const removeItem = (itemId, platform) => {
+    const removeItem = (itemId) => {
         const updatedCart = cartItems.filter(item => 
-            !(item.id === itemId && item.platform === platform)
+            item.id !== itemId
         );
         setCartItems(updatedCart);
         localStorage.setItem('cart', JSON.stringify(updatedCart));
@@ -38,11 +38,9 @@ function CartPage({ user, onBack, onUpdateCart }) {
     };
 
     const clearCart = () => {
-        if (window.confirm('Are you sure you want to clear your cart?')) {
             setCartItems([]);
             localStorage.setItem('cart', JSON.stringify([]));
             if (onUpdateCart) onUpdateCart([]);
-        }
     };
 
     const calculateSubtotal = () => {
@@ -102,7 +100,7 @@ function CartPage({ user, onBack, onUpdateCart }) {
                             {/* Cart Items List */}
                             <div className="cart-items">
                                 {cartItems.map(item => (
-                                    <div key={`${item.id}-${item.platform}`} className="cart-item">
+                                    <div key={item.id} className="cart-item">
                                         <div className="cart-item-image">
                                             {item.image ? (
                                                 <img src={item.image} alt={item.name} />
@@ -116,7 +114,6 @@ function CartPage({ user, onBack, onUpdateCart }) {
                                         <div className="cart-item-details">
                                             <h3 className="cart-item-title">{item.name}</h3>
                                             <p className="cart-item-category">{item.categoryName}</p>
-                                            <p className="cart-item-platform">Platform: {item.platform || "PC"}</p>
                                         </div>
                                         
                                         <div className="cart-item-price">
@@ -126,7 +123,7 @@ function CartPage({ user, onBack, onUpdateCart }) {
                                         <div className="cart-item-quantity">
                                             <button 
                                                 className="quantity-btn"
-                                                onClick={() => updateQuantity(item.id, item.platform, item.quantity - 1)}
+                                                onClick={() => updateQuantity(item.id, item.quantity - 1)}
                                                 disabled={item.quantity <= 1}
                                             >
                                                 −
@@ -134,7 +131,7 @@ function CartPage({ user, onBack, onUpdateCart }) {
                                             <span className="quantity-display">{item.quantity}</span>
                                             <button 
                                                 className="quantity-btn"
-                                                onClick={() => updateQuantity(item.id, item.platform, item.quantity + 1)}
+                                                onClick={() => updateQuantity(item.id, item.quantity + 1)}
                                             >
                                                 +
                                             </button>
@@ -146,7 +143,7 @@ function CartPage({ user, onBack, onUpdateCart }) {
                                         
                                         <button 
                                             className="cart-item-remove"
-                                            onClick={() => removeItem(item.id, item.platform)}
+                                            onClick={() => removeItem(item.id)}
                                             title="Remove item"
                                         >
                                             ✕

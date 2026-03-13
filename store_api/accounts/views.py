@@ -2,7 +2,8 @@ import json
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.decorators import login_required
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import User
 from .forms import UserUpdateForm, ProfileUpdateForm
 from .repositories import userRepository
@@ -97,6 +98,8 @@ def login_api(request):
     })
 
 @csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def logout_api(request):
     if request.method != "POST":
         return JsonResponse({"detail": "Method not allowed"}, status=405)
@@ -105,6 +108,8 @@ def logout_api(request):
     return JsonResponse({"detail": "logged out"})
 
 @csrf_exempt
+#@api_view(['GET'])
+#@permission_classes([IsAuthenticated])
 def users_api(request):
     if request.method != "GET":
         return JsonResponse({"detail": "Method not allowed"}, status=405)
@@ -116,6 +121,8 @@ def users_api(request):
     return JsonResponse({"users": users_data})
 
 @csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def update_api(request):
     if request.method != "POST":
         return JsonResponse({"detail": "Method not allowed"}, status=405)
@@ -162,8 +169,9 @@ def update_api(request):
                 },    
     })
 
-@login_required
 @csrf_exempt  # later you can replace this with proper CSRF/JWT handling
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def profile_api(request):
     if request.method == "GET":
         # Return current user/profile data so the SPA can fill the form
