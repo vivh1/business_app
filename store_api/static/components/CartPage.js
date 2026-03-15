@@ -4,6 +4,8 @@ function CartPage({ user, onBack, onUpdateCart }) {
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const [showCheckout, setShowCheckout] = useState(false);
+
     useEffect(() => {
         loadCart();
     }, []);
@@ -59,13 +61,42 @@ function CartPage({ user, onBack, onUpdateCart }) {
     };
 
     const handleCheckout = () => {
-        alert('Proceeding to checkout! This would connect to payment processing.');
-        // In a real app, this would redirect to checkout page
+        setShowCheckout(true);
     };
+
+    const handleOrderPlaced = (orderData) => {
+        console.log('Order placed:', orderData);
+        // Update cart count or any other state
+        loadCart();
+
+        const updatedCart = JSON.parse(localStorage.getItem('cart')) || [];
+        const total = updatedCart.reduce((sum, item) => sum + item.quantity, 0);
+        window.dispatchEvent(new Event('storage'));
+
+        setTimeout(() => {
+            setShowCheckout(false);
+        }, 2000);
+    };
+
+    const handleBackFromCheckout = () => {
+        setShowCheckout(false);
+    };
+
+    if (showCheckout) {
+        return (
+            <CheckoutPage
+                user={user}
+                cart={cartItems}
+                onBack={handleBackFromCheckout}
+                onOrderPlaced={handleOrderPlaced}
+            />
+        );
+    }
 
     const subtotal = calculateSubtotal();
     const tax = calculateTax();
     const total = calculateTotal();
+
 
     return (
         <div className="cart-page">

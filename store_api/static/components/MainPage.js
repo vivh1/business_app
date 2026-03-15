@@ -32,6 +32,8 @@ function MainPage({ user, onLogout }) {
     const [showCart, setShowCart] = useState(false);
     const [cartCount, setCartCount] = useState(0);
     const [categories, setCategories] = useState([]);
+
+    const [showProfile, setShowProfile] = useState(false);
     
     // Categories data
     useEffect(() => {
@@ -103,6 +105,23 @@ function MainPage({ user, onLogout }) {
 
         fetchCategories();
     }, []);
+
+    useEffect(() => {
+        const handleStorageChange = () => {
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            setCartCount(cart.reduce((total, item) => total + item.quantity, 0));
+        };
+
+        // Listen for storage events (when cart is cleared)
+        window.addEventListener('storage', handleStorageChange);
+        
+        // Initial load
+        handleStorageChange();
+        
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+        };
+    }, []);
     
     const [sortOrder, setSortOrder] = useState('default');
 
@@ -111,8 +130,12 @@ function MainPage({ user, onLogout }) {
     };
 
     const handleProfileClick = () => {
-        alert('Profile clicked');
+        setShowProfile(true);
         setShowDropdown(false);
+    };
+
+    const handleBackFromProfile = () => {
+        setShowProfile(false);
     };
 
     const handleSettingsClick = () => {
@@ -366,7 +389,7 @@ function MainPage({ user, onLogout }) {
                 });
                 
                 if (response.ok) {
-                    await refetchCategories(); // Use refetchCategories, not refetchProducts
+                    await refetchCategories();
                     if (selectedCategory && selectedCategory.id === categoryId) {
                         setSelectedCategory(null);
                     }
@@ -604,7 +627,7 @@ function MainPage({ user, onLogout }) {
                 });
             });
 
-            // Convert to array matching your existing structure
+            // Convert to array matching existing structure
             const formatted = Object.entries(grouped).map(([genre, games], index) => ({
                 id: index + 1,
                 name: genre,
@@ -727,6 +750,15 @@ function MainPage({ user, onLogout }) {
             </div>
         );
     }
+
+    if (showProfile) {
+    return (
+        <ProfilePage
+            user={user}
+            onBack={handleBackFromProfile}
+        />
+    );
+}
 
     if (showProfileSettings) {
         return (
