@@ -7,6 +7,9 @@ function MainPage({ user, onLogout }) {
     const [showManageUsers, setShowManageUsers] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState(null);
 
+    const [newCategoryImageFile, setNewCategoryImageFile] = useState(null);
+    const [newCategoryImagePreview, setNewCategoryImagePreview] = useState(null);
+
     const [showAddCategory, setShowAddCategory] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState('');
     const [newCategoryImage, setNewCategoryImage] = useState('');
@@ -15,6 +18,10 @@ function MainPage({ user, onLogout }) {
     const [showAddGamePage, setShowAddGamePage] = useState(false);
     const [newGameName, setNewGameName] = useState('');
     const [newGameImage, setNewGameImage] = useState('');
+
+    const [editingCategoryImage, setEditingCategoryImage] = useState(null);
+    const [editingCategoryImagePreview, setEditingCategoryImagePreview] = useState(null);
+    const [categoryImageFile, setCategoryImageFile] = useState(null);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
@@ -28,12 +35,12 @@ function MainPage({ user, onLogout }) {
     
     // Categories data
     useEffect(() => {
-        const fetchProducts = async () => {
+        const fetchCategories = async () => {
             try {
                 const tokenData = JSON.parse(localStorage.getItem('accessToken'));
                 const token = tokenData?.access;
                 
-                const response = await fetch('http://localhost:8000/api/products/', {
+                const response = await fetch('http://localhost:8000/api/categories/', {
                     method: 'GET',
                     headers: { 
                         'Authorization': `Bearer ${token}`,
@@ -42,50 +49,59 @@ function MainPage({ user, onLogout }) {
                 });
                 
                 if (!response.ok) {
-                    throw new Error('Failed to fetch products');
+                    throw new Error('Failed to fetch categories');
                 }
                 
-                const data = await response.json();
+                const categoriesData = await response.json();
                 
-                // Group games by genre/category
-                const grouped = {};
-                data.forEach(game => {
-                    const categoryName = game.genre || 'Uncategorized';
-                    
-                    if (!grouped[categoryName]) {
-                        grouped[categoryName] = [];
+                // Also fetch products to get games for each category
+                const productsResponse = await fetch('http://localhost:8000/api/products/', {
+                    method: 'GET',
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
                     }
-                    
-                    grouped[categoryName].push({
-                        id: game.id,
-                        title: game.title,
-                        name: game.title,
-                        image: game.image,
-                        description: game.description,
-                        price: game.price,
-                        release_date: game.release_date,
-                        developer: game.developer,
-                        genre: game.genre,
-                        quantity: game.quantity
+                });
+                
+                const productsData = await productsResponse.json();
+                
+                // Group products by category
+                const productsByCategory = {};
+                productsData.forEach(product => {
+                    const categoryName = product.genre;
+                    if (!productsByCategory[categoryName]) {
+                        productsByCategory[categoryName] = [];
+                    }
+                    productsByCategory[categoryName].push({
+                        id: product.id,
+                        title: product.title,
+                        name: product.title,
+                        image: product.image,
+                        description: product.description,
+                        price: product.price,
+                        release_date: product.release_date,
+                        developer: product.developer,
+                        genre: product.genre,
+                        quantity: product.quantity
                     });
                 });
-
-                // Convert to array
-                const formatted = Object.entries(grouped).map(([genre, games], index) => ({
-                    id: index + 1,
-                    name: genre,
-                    image: games[0]?.image || '',
-                    games: games
+                
+                // Format categories with their games
+                const formatted = categoriesData.map((category, index) => ({
+                    id: category.id || index + 1,
+                    name: category.name,
+                    image: category.image || '',
+                    games: productsByCategory[category.name] || []
                 }));
-
+                
                 setCategories(formatted);
             } catch (err) {
-                console.error('Error fetching products:', err);
+                console.error('Error fetching categories:', err);
                 setCategories([]);
             }
         };
 
-        fetchProducts();
+        fetchCategories();
     }, []);
     
     const [sortOrder, setSortOrder] = useState('default');
@@ -204,68 +220,170 @@ function MainPage({ user, onLogout }) {
     const handleAddCategory = async () => {
         if (!user.is_admin) return;
         if (newCategoryName.trim()) {
-            const newId = Math.max(...categories.map(c => c.id), 0) + 1;
-            const newCategory = {
-                id: newId,
-                name: newCategoryName,
-                visible: true,
-                games: []
-            };
             try {
+                const tokenData = JSON.parse(localStorage.getItem('accessToken'));
+                const token = tokenData?.access;
+                
+                console.log('Sending category data:', {
+                    name: newCategoryName,
+                    hasImage: !!newCategoryImagePreview
+                });
+                
+                const response = await fetch('http://localhost:8000/api/categories/add/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        name: newCategoryName,
+                        image: newCategoryImagePreview || ''
+                    })
+                });
+                
+                console.log('Response status:', response.status);
+                
+                // Check content type
+                const contentType = response.headers.get('content-type');
+                console.log('Content-Type:', contentType);
+                
+                // Get the response text first
+                const text = await response.text();
+                console.log('Response text (first 200 chars):', text.substring(0, 200));
+                
+                // Try to parse as JSON
+                try {
+                    const data = JSON.parse(text);
+                    console.log('Parsed JSON:', data);
+                    
+                    if (response.ok) {
+                        await refetchCategories();
+                        setNewCategoryName('');
+                        setNewCategoryImagePreview(null);
+                        setNewCategoryImageFile(null);
+                        setShowAddCategory(false);
+                    } else {
+                        alert(data.message || `Failed to add category: ${response.status}`);
+                    }
+                } catch (e) {
+                    console.error('Failed to parse JSON:', e);
+                    alert('Server returned invalid JSON. Check console for details.');
+                }
+            } catch (error) {
+                console.error('Error adding category:', error);
+                alert('Failed to add category: ' + error.message);
+            }
+        }
+    };
+
+    const handleCategoryImageChange = (e, categoryId) => {
+        const file = e.target.files[0];
+        if (file) {
+            setCategoryImageFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setEditingCategoryImagePreview(reader.result);
+                setEditingCategoryImage(categoryId);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleSaveCategoryImage = async (categoryId) => {
+        if (!user.is_admin) return;
+        
+        try {
             const tokenData = JSON.parse(localStorage.getItem('accessToken'));
             const token = tokenData?.access;
-
-            const response = await fetch('http://localhost:8000/api/categories/add/', {
+            
+            const response = await fetch('http://localhost:8000/api/categories/update/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ name: newCategoryName })
+                body: JSON.stringify({
+                    id: categoryId,
+                    image: editingCategoryImagePreview || ''
+                })
             });
-
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                const newId = Math.max(...categories.map(c => c.id), 0) + 1;
-                const newCategory = {
-                    id: newId,
-                    name: newCategoryName,
-                    image: newCategoryImage || '',
-                    games: []
-                };
-                setCategories([...categories, newCategory]);
-                setNewCategoryName('');
-                setNewCategoryImage('');
-                setShowAddCategory(false);
-            } else {
-                console.error('Failed to add category:', data.message);
+            
+            if (response.ok) {
+                await refetchCategories();
+                setEditingCategoryImage(null);
+                setEditingCategoryImagePreview(null);
+                setCategoryImageFile(null);
             }
         } catch (error) {
-                console.error('Error adding category:', error);
-        }
-            setCategories([...categories, newCategory]);
-            setNewCategoryName('');
-            setShowAddCategory(false);
+            console.error('Error updating category image:', error);
         }
     };
 
-    const handleDeleteCategory = (categoryId) => {
+    const handleRemoveCategoryImage = async (categoryId) => {
         if (!user.is_admin) return;
-        if (window.confirm('Are you sure you want to delete this category and all its games?')) {
-            setCategories(categories.filter(c => c.id !== categoryId));
-            if (selectedCategory && selectedCategory.id === categoryId) {
-                setSelectedCategory(null);
+        if (window.confirm('Are you sure you want to remove this category image?')) {
+            try {
+                const tokenData = JSON.parse(localStorage.getItem('accessToken'));
+                const token = tokenData?.access;
+                
+                const response = await fetch('http://localhost:8000/api/categories/update/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        id: categoryId,
+                        image: '' // Send empty string to remove image
+                    })
+                });
+                
+                if (response.ok) {
+                    await refetchCategories();
+                }
+            } catch (error) {
+                console.error('Error removing category image:', error);
             }
         }
     };
 
-    const handleRenameCategory = (categoryId, newName) => {
+    const handleDeleteCategory = async (categoryId) => {
+        if (!user.is_admin) return;
+        if (window.confirm('Are you sure you want to delete this category and all its games?')) {
+            try {
+                const tokenData = JSON.parse(localStorage.getItem('accessToken'));
+                const token = tokenData?.access;
+                
+                const categoryToDelete = categories.find(c => c.id === categoryId);
+                
+                const response = await fetch('http://localhost:8000/api/categories/delete/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ name: categoryToDelete.name })
+                });
+                
+                if (response.ok) {
+                    await refetchCategories(); // Use refetchCategories, not refetchProducts
+                    if (selectedCategory && selectedCategory.id === categoryId) {
+                        setSelectedCategory(null);
+                    }
+                }
+            } catch (error) {
+                console.error('Error deleting category:', error);
+            }
+        }
+    };
+
+    const handleRenameCategory = async (categoryId, newName) => {
         if (!user.is_admin) return;
         setCategories(categories.map(c => 
             c.id === categoryId ? { ...c, name: newName } : c
         ));
         setEditingCategory(null);
+        await refetchCategories();
     };
 
     // Game functions (Admin only)
@@ -277,8 +395,9 @@ function MainPage({ user, onLogout }) {
         setShowAddGamePage(false);
     };
 
-    const handleGameAdded = (newGame) => {
+    const handleGameAdded = async (newGame) => {
         // Refresh current category games
+        await refetchProducts();
         if (selectedCategory) {
             setSelectedCategory({
                 ...selectedCategory,
@@ -307,6 +426,7 @@ function MainPage({ user, onLogout }) {
                 const data = await response.json();
                 
                 if (data.success) {
+                    await refetchProducts();
                     setCategories(categories.map(c => 
                         c.id === categoryId 
                             ? { ...c, games: c.games.filter(g => g.id !== gameId) } 
@@ -334,33 +454,34 @@ function MainPage({ user, onLogout }) {
         setEditingGame(null);
     };
 
-    const handleUpdateGame = async (gameId, updatedFields, categoryId) => {
+    const handleUpdateGame = async (gameId, updatedFields) => {
         if (!user.is_admin) return;
 
-        console.log('Updating game:', { categoryId, gameId, updatedFields });
+        // Find which category this game belongs to
+        let foundCategoryId = null;
+        const updatedCategories = categories.map(c => {
+            const gameIndex = c.games.findIndex(g => g.id === gameId);
+            if (gameIndex !== -1) {
+                foundCategoryId = c.id;
+                const updatedGames = [...c.games];
+                updatedGames[gameIndex] = { ...updatedGames[gameIndex], ...updatedFields };
+                return { ...c, games: updatedGames };
+            }
+            return c;
+        });
+
+        setCategories(updatedCategories);
         
-        // Immediate upload for responsiveness
-        setCategories(categories.map(c => 
-            c.id === categoryId 
-                ? { ...c, games: c.games.map(g => 
-                    g.id === gameId ? { ...g, ...updatedFields } : g
-                )} 
-                : c
-        ));
-        
-        // Also update selectedGame if it's current one
+        // Update selectedGame if it's the current one
         if (selectedGame && selectedGame.id === gameId) {
             setSelectedGame({ ...selectedGame, ...updatedFields });
         }
         
-        // Send update to backend
         try {
             const tokenData = JSON.parse(localStorage.getItem('accessToken'));
             const token = tokenData?.access;
             
-            console.log('Token:', token ? 'Exists' : 'Missing');
-            
-            const response = await fetch('http://localhost:8000/api/products/update/', {
+            await fetch('http://localhost:8000/api/products/update/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -371,19 +492,129 @@ function MainPage({ user, onLogout }) {
                     ...updatedFields
                 })
             });
-            
-            console.log('Response status:', response.status);
-            
-            const data = await response.json();
-            console.log('Response data:', data);
-            
-            if (!response.ok) {
-                console.error('Failed to update game:', data.message);
-            } else {
-                console.log('Game updated successfully');
-            }
         } catch (error) {
             console.error('Error updating game:', error);
+        }
+    };
+
+    const refetchCategories = async () => {
+        try {
+            const tokenData = JSON.parse(localStorage.getItem('accessToken'));
+            const token = tokenData?.access;
+            
+            const response = await fetch('http://localhost:8000/api/categories/', {
+                method: 'GET',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch categories');
+            }
+            
+            const categoriesData = await response.json();
+            
+            // Also fetch products to get games for each category
+            const productsResponse = await fetch('http://localhost:8000/api/products/', {
+                method: 'GET',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            const productsData = await productsResponse.json();
+            
+            // Group products by category
+            const productsByCategory = {};
+            productsData.forEach(product => {
+                const categoryName = product.genre;
+                if (!productsByCategory[categoryName]) {
+                    productsByCategory[categoryName] = [];
+                }
+                productsByCategory[categoryName].push({
+                    id: product.id,
+                    title: product.title,
+                    name: product.title,
+                    image: product.image,
+                    description: product.description,
+                    price: product.price,
+                    release_date: product.release_date,
+                    developer: product.developer,
+                    genre: product.genre,
+                    quantity: product.quantity
+                });
+            });
+            
+            // Format categories with their games
+            const formatted = categoriesData.map((category, index) => ({
+                id: category.id || index + 1,
+                name: category.name,
+                image: category.image || '',
+                games: productsByCategory[category.name] || []
+            }));
+            
+            setCategories(formatted);
+        } catch (err) {
+            console.error('Error refetching categories:', err);
+        }
+    };
+
+    const refetchProducts = async () => {
+        try {
+            const tokenData = JSON.parse(localStorage.getItem('accessToken'));
+            const token = tokenData?.access;
+            
+            const response = await fetch('http://localhost:8000/api/products/', {
+                method: 'GET',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch products');
+            }
+            
+            const data = await response.json();
+            
+            // Group games by genre/category
+            const grouped = {};
+            data.forEach(game => {
+                const categoryName = game.genre || 'Uncategorized';
+                
+                if (!grouped[categoryName]) {
+                    grouped[categoryName] = [];
+                }
+                
+                grouped[categoryName].push({
+                    id: game.id,
+                    title: game.title,
+                    name: game.title,
+                    image: game.image,
+                    description: game.description,
+                    price: game.price,
+                    release_date: game.release_date,
+                    developer: game.developer,
+                    genre: game.genre,
+                    quantity: game.quantity
+                });
+            });
+
+            // Convert to array matching your existing structure
+            const formatted = Object.entries(grouped).map(([genre, games], index) => ({
+                id: index + 1,
+                name: genre,
+                image: games[0]?.image || '',
+                games: games
+            }));
+
+            setCategories(formatted);
+        } catch (err) {
+            console.error('Error refetching products:', err);
         }
     };
 
@@ -436,6 +667,7 @@ function MainPage({ user, onLogout }) {
         const cart = JSON.parse(localStorage.getItem('cart')) || [];
         setCartCount(cart.reduce((total, item) => total + item.quantity, 0));
     }, []);
+    
 
     if (showAddGamePage && selectedCategory) {
         return (
@@ -674,6 +906,7 @@ function MainPage({ user, onLogout }) {
                                                 </button>
                                             </div>
                                         )}
+
                                     </div>
                                 </div>
                             ))}
@@ -818,29 +1051,54 @@ function MainPage({ user, onLogout }) {
                         )}
                     </div>
 
-                    {showAddCategory && user.is_admin && (
-                        <div className="add-form-container">
-                            <h3 className="form-title">Add New Category</h3>
-                            <input
-                                type="text"
-                                placeholder="Category Name"
-                                className="form-input"
-                                value={newCategoryName}
-                                onChange={(e) => setNewCategoryName(e.target.value)}
-                            />
-                            <input
-                                type="text"
-                                placeholder="Image URL (optional)"
-                                className="form-input"
-                                value={newCategoryImage}
-                                onChange={(e) => setNewCategoryImage(e.target.value)}
-                            />
-                            <div className="form-buttons">
-                                <button className="btn-save" onClick={handleAddCategory}>Save</button>
-                                <button className="btn-cancel" onClick={() => setShowAddCategory(false)}>Cancel</button>
+                {showAddCategory && user.is_admin && (
+                    <div className="add-form-container">
+                        <h3 className="form-title">Add New Category</h3>
+                        <input
+                            type="text"
+                            placeholder="Category Name"
+                            className="form-input"
+                            value={newCategoryName}
+                            onChange={(e) => setNewCategoryName(e.target.value)}
+                        />
+                        
+                        {/* Image upload section - exactly like AddGamePage */}
+                        <div className="form-group">
+                            <label>Category Image</label>
+                            <div className="image-upload-area">
+                                {newCategoryImagePreview ? (
+                                    <img 
+                                        src={newCategoryImagePreview} 
+                                        alt="Preview" 
+                                        className="image-preview"
+                                    />
+                                ) : (
+                                    <div className="image-placeholder">
+                                        No image selected
+                                    </div>
+                                )}
+                                <input
+                                    type="file"
+                                    id="category-image-upload"
+                                    accept="image/*"
+                                    onChange={handleCategoryImageChange}
+                                    className="image-input"
+                                />
+                                <label htmlFor="category-image-upload" className="image-upload-label">
+                                    Choose File
+                                </label>
+                                <span className="file-name">
+                                    {newCategoryImageFile ? newCategoryImageFile.name : 'No file chosen'}
+                                </span>
                             </div>
                         </div>
-                    )}
+                        
+                        <div className="form-buttons">
+                            <button className="btn-save" onClick={handleAddCategory}>Save</button>
+                            <button className="btn-cancel" onClick={() => setShowAddCategory(false)}>Cancel</button>
+                        </div>
+                    </div>
+                )}
                     
                     <div className="cards-grid">
                         {displayedCategories
@@ -918,6 +1176,91 @@ function MainPage({ user, onLogout }) {
                                                 >
                                                     Delete
                                                 </button>
+                                            </div>
+                                        )}
+                                        {user.is_admin && editingCategoryImage === category.id ? (
+                                            <div className="category-image-edit" style={{ marginTop: '0.5rem' }}>
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files[0];
+                                                        if (file) {
+                                                            setCategoryImageFile(file);
+                                                            const reader = new FileReader();
+                                                            reader.onloadend = () => {
+                                                                setEditingCategoryImagePreview(reader.result);
+                                                            };
+                                                            reader.readAsDataURL(file);
+                                                        }
+                                                    }}
+                                                    id={`category-image-${category.id}`}
+                                                    style={{ display: 'none' }}
+                                                />
+                                                <label htmlFor={`category-image-${category.id}`} className="btn-rename">
+                                                    Choose Image
+                                                </label>
+                                                
+                                                {/* Show preview immediately when image is selected */}
+                                                {editingCategoryImagePreview && (
+                                                    <div style={{ marginTop: '0.5rem' }}>
+                                                        <img 
+                                                            src={editingCategoryImagePreview} 
+                                                            alt="Preview" 
+                                                            style={{ width: '100%', maxHeight: '100px', objectFit: 'cover', borderRadius: '5px' }}
+                                                        />
+                                                    </div>
+                                                )}
+                                                
+                                                {/* Always show Save/Remove/Cancel when in edit mode, even before image selected */}
+                                                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                                    <button 
+                                                        className="btn-save" 
+                                                        onClick={() => handleSaveCategoryImage(category.id)}
+                                                        disabled={!editingCategoryImagePreview} // Disable if no image selected
+                                                    >
+                                                        Save
+                                                    </button>
+                                                    {category.image && (
+                                                        <button 
+                                                            className="btn-delete" 
+                                                            onClick={() => handleRemoveCategoryImage(category.id)}
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    )}
+                                                    <button 
+                                                        className="btn-cancel" 
+                                                        onClick={() => {
+                                                            setEditingCategoryImage(null);
+                                                            setEditingCategoryImagePreview(null);
+                                                            setCategoryImageFile(null);
+                                                        }}
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : user.is_admin && (
+                                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                                <button 
+                                                    className="btn-rename" 
+                                                    onClick={() => {
+                                                        setEditingCategoryImage(category.id);
+                                                        setEditingCategoryImagePreview(null); // Reset preview when opening
+                                                        setCategoryImageFile(null);
+                                                    }}
+                                                >
+                                                    {category.image ? 'Change Image' : 'Add Image'}
+                                                </button>
+                                                {category.image && (
+                                                    <button 
+                                                        className="btn-delete" 
+                                                        onClick={() => handleRemoveCategoryImage(category.id)}
+                                                    >
+                                                        Remove Image
+                                                    </button>
+                                                )}
                                             </div>
                                         )}
                                     </div>

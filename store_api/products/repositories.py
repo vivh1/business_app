@@ -47,8 +47,8 @@ class CategoryRepository:
     def save(self, category):
         category.save()
 
-    def add_category(self, name):
-        category = Category(name=name)
+    def add_category(self, name, image=None):
+        category = Category(name=name, image=image)
         category.save()
         return category
     

@@ -67,6 +67,7 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
         const file = e.target.files[0];
         if (file) {
             setImageFile(file);
+            // Create preview
             const reader = new FileReader();
             reader.onloadend = () => {
                 setTempImage(reader.result);
@@ -76,14 +77,29 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
     };
 
     const handleSaveImage = () => {
-        onUpdateGame(game.id, { image: tempImage });
-        setEditingImage(false);
-        setImageFile(null);
+        if (imageFile) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64Image = reader.result;
+                
+                // Call the parent update function
+                onUpdateGame(game.id, { image: base64Image });
+                
+                setTempImage(base64Image);
+                setEditingImage(false);
+                setImageFile(null);
+            };
+            reader.readAsDataURL(imageFile);
+        } else {
+            setEditingImage(false);
+            setImageFile(null);
+        }
     };
 
     const handleRemoveImage = () => {
-        setTempImage("");
+        // Call the parent update function
         onUpdateGame(game.id, { image: "" });
+        setTempImage("");
         setEditingImage(false);
         setImageFile(null);
     };
@@ -154,7 +170,7 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
                                         <>
                                             <div className="game-details-image">
                                                 {game.image ? (
-                                                    <img src={ `http://localhost:8000${game.image}`} alt={game.title} className="game-image-display" />
+                                                    <img src={ `${game.image}`} alt={game.title} className="game-image-display" />
                                                 ) : (
                                                     <div className="game-details-image-placeholder">
                                                         No Image

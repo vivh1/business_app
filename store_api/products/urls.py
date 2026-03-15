@@ -12,4 +12,5 @@ urlpatterns = [
     path('categories/add/',views.add_category,name='add-category'),
     path('categories/',views.get_categories,name='get-categories'),
     path('categories/delete/',views.delete_category,name='delete-category'),
+    path('categories/update/', views.update_category, name='update-category'),
 ]

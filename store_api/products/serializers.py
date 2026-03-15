@@ -4,7 +4,7 @@ from .models import Product, Category
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ['id', 'name']
+        fields = ['id', 'name', 'image'] # Added image - Cyel
 
 class ProductSerializer(serializers.ModelSerializer):
     genre = serializers.StringRelatedField()

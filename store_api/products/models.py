@@ -2,6 +2,7 @@ from django.db import models
 
 class Category(models.Model):
     name = models.CharField(max_length=50, unique=True)
+    image = models.ImageField(upload_to='categories/images/', blank=True, null=True) # For category images - Cyel
 
     def __str__(self):
         return self.name

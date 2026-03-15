@@ -208,6 +208,7 @@ def add_category(request):
         )
     
     name = data.get("name")
+    image_data = data.get("image")  # Get image data
 
     if not name:
         return Response(
@@ -215,7 +216,15 @@ def add_category(request):
             status=400
         )
     
-    category = category_service.add_category(name)
+    image_file = None
+    if image_data and image_data.startswith('data:image'):
+        import base64, uuid
+        from django.core.files.base import ContentFile
+        format, imgstr = image_data.split(';base64,')
+        ext = format.split('/')[-1]
+        image_file = ContentFile(base64.b64decode(imgstr), name=f'{uuid.uuid4()}.{ext}')
+    
+    category = category_service.add_category(name, image_file)  # Pass image to service
 
     if not category:
         return Response(
@@ -223,10 +232,8 @@ def add_category(request):
             status=400
         )
     
-    return Response(
-        {"success": True, "message": "Category added successfully"},
-        status=200
-    )
+    serializer = CategorySerializer(category, context={'request': request})
+    return Response(serializer.data, status=201)
 
 @csrf_exempt
 @api_view(['POST'])
@@ -337,3 +344,57 @@ def delete_category(request):
         {"success": True, "message": "Category deleted successfully"},
         status=200
     )
+
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_category(request):
+    if request.method != 'POST':
+        return Response(
+            {"success": False, "message": "Method not allowed"},
+            status=405
+        )
+    
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return Response(
+            {"success": False, "message": "Invalid JSON"},
+            status=400
+        )
+    
+    category_id = data.get("id")
+    image_data = data.get("image")
+    
+    if not category_id:
+        return Response(
+            {"success": False, "message": "Missing required fields"},
+            status=400
+        )
+    
+    category = category_service.get_by_id(category_id)
+    
+    if not category:
+        return Response(
+            {"success": False, "message": "Category not found"},
+            status=404
+        )
+    
+    # Handle image removal
+    if image_data == "":
+        # Delete the image file if it exists
+        if category.image:
+            category.image.delete(save=False)
+        category.image = None
+        category.save()
+    elif image_data and image_data.startswith('data:image'):
+        import base64, uuid
+        from django.core.files.base import ContentFile
+        format, imgstr = image_data.split(';base64,')
+        ext = format.split('/')[-1]
+        image_file = ContentFile(base64.b64decode(imgstr), name=f'{uuid.uuid4()}.{ext}')
+        category.image = image_file
+        category.save()
+    
+    serializer = CategorySerializer(category, context={'request': request})
+    return Response(serializer.data)

@@ -1,3 +1,5 @@
+from email.mime import image
+
 from .models import Product
 
 
@@ -89,17 +91,14 @@ class CategoryService:
     def get_by_id(self, id_in):
         return self.category_repository.get_by_id(id_in)
 
-    def add_category(self, name):
-        return self.category_repository.add_category(name)
+    def add_category(self, name, image=None):
+        return self.category_repository.add_category(name, image)
     
     def get_name_by_id(self, id_in):
         category = self.category_repository.get_by_id(id_in)
         if category:
             return category.name
         return None
-    
-    def add_category(self, name):
-        return self.category_repository.add_category(name)
     
     def delete_category(self, name):
         return self.category_repository.delete_category(name)
