@@ -11,4 +11,5 @@ urlpatterns = [
     path('products/add/',views.add_product,name='add-product'),
     path('categories/add/',views.add_category,name='add-category'),
     path('categories/',views.get_categories,name='get-categories'),
+    path('categories/delete/',views.delete_category,name='delete-category'),
 ]

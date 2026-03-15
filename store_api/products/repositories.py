@@ -21,6 +21,12 @@ class ProductRepository:
     def save(self, product):
         product.save()
 
+    def get_by_category(self, category):
+        return Product.objects.filter(genre=category)
+    
+    def delete_all_by_category(self, category):
+        return Product.objects.filter(genre=category).delete()
+
 class CategoryRepository:
     
     def get_all_categories(self):
@@ -45,3 +51,12 @@ class CategoryRepository:
         category = Category(name=name)
         category.save()
         return category
+    
+    def delete_category(self, category_in):
+        category = self.get_by_name(category_in)
+
+        if not category:
+            return None
+        
+        category.delete()
+        return 1

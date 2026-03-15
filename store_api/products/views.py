@@ -299,5 +299,41 @@ def get_categories(request):
     serializer = CategorySerializer(categories, many=True, context={'request': request})
     return Response(serializer.data)
 
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def delete_category(request):
-    pass
+    if request.method != 'POST':
+        return Response(
+            {"success": False, "message": "Method not allowed"},
+            status=405
+        )
+    
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return Response(
+            {"success": False, "message": "Invalid JSON"},
+            status=400
+        )
+    
+    category_name = data.get("name")
+
+    if not category_name:
+        return Response(
+            {"success": False, "message": "Missing required fields"},
+            status=400
+        )
+    
+    ans = product_service.delete_category_and_products(category_name)
+
+    if ans == None:
+        return Response(
+            {"success": False, "message": "Category not deleted"},
+            status=400
+        )
+    
+    return Response(
+        {"success": True, "message": "Category deleted successfully"},
+        status=200
+    )

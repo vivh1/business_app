@@ -69,6 +69,15 @@ class ProductService:
         self.product_repository.save(product)
         return product
     
+    def delete_category_and_products(self, category_name):
+        category = self.category_repository.get_by_name(category_name)
+        if not category:
+            return None
+
+        self.product_repository.delete_all_by_category(category)
+        category.delete()
+        return 1
+    
 class CategoryService:
     
     def __init__(self, category_repository):
@@ -91,3 +100,6 @@ class CategoryService:
     
     def add_category(self, name):
         return self.category_repository.add_category(name)
+    
+    def delete_category(self, name):
+        return self.category_repository.delete_category(name)
