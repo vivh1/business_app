@@ -474,7 +474,7 @@ function MainPage({ user, onLogout }) {
     const handleRenameGame = (categoryId, gameId, newName) => {
         if (!user.is_admin) return;
         if (newName.trim()) {
-            handleUpdateGame(categoryId, gameId, { title: newName });
+            handleUpdateGame(gameId, { title: newName });
         }
         setEditingGame(null);
     };
