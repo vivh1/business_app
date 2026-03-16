@@ -365,6 +365,7 @@ def update_category(request):
     
     category_id = data.get("id")
     image_data = data.get("image")
+    name = data.get("name")
     
     if not category_id:
         return Response(
@@ -380,21 +381,24 @@ def update_category(request):
             status=404
         )
     
+    image_file = None
     # Handle image removal
-    if image_data == "":
-        # Delete the image file if it exists
-        if category.image:
-            category.image.delete(save=False)
-        category.image = None
-        category.save()
-    elif image_data and image_data.startswith('data:image'):
-        import base64, uuid
-        from django.core.files.base import ContentFile
+    if image_data and image_data.startswith('data:image'):
         format, imgstr = image_data.split(';base64,')
         ext = format.split('/')[-1]
         image_file = ContentFile(base64.b64decode(imgstr), name=f'{uuid.uuid4()}.{ext}')
-        category.image = image_file
-        category.save()
+
+    updated_category = category_service.update_category(
+        id_in=category_id,
+        new_name=name,
+        new_image=image_file
+    )
+
+    if not updated_category:
+        return Response(
+            {"success": False, "message": "Category not updated"},
+            status=400
+        )
     
     serializer = CategorySerializer(category, context={'request': request})
     return Response(serializer.data)

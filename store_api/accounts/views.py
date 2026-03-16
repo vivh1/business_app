@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth.models import User
 from .forms import UserUpdateForm, ProfileUpdateForm
 from .repositories import userRepository
@@ -17,6 +17,8 @@ user_service = userService(user_repository)
 auth_service = authenticationService(user_repository)
 
 @csrf_exempt
+@api_view(['POST'])
+@permission_classes([AllowAny])
 def register_api(request):
     if request.method != "POST":
         return JsonResponse(
@@ -53,6 +55,8 @@ def register_api(request):
     })
 
 @csrf_exempt
+@api_view(['POST'])
+@permission_classes([AllowAny])
 def login_api(request):
     if request.method != "POST":
         return JsonResponse(

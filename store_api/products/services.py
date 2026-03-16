@@ -102,3 +102,16 @@ class CategoryService:
     
     def delete_category(self, name):
         return self.category_repository.delete_category(name)
+    
+    def update_category(self, id_in, new_name=None, new_image=None):
+        category = self.category_repository.get_by_id(id_in)
+        if not category:
+            return None
+
+        if new_name is not None:
+            category.name = new_name
+        if new_image is not None:
+            category.image = new_image
+
+        self.category_repository.save(category)
+        return category

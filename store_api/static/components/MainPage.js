@@ -402,13 +402,48 @@ function MainPage({ user, onLogout }) {
         }
     };
 
+    // ...existing code...
     const handleRenameCategory = async (categoryId, newName) => {
         if (!user.is_admin) return;
-        setCategories(categories.map(c => 
-            c.id === categoryId ? { ...c, name: newName } : c
-        ));
-        setEditingCategory(null);
-        await refetchCategories();
+
+        const trimmedName = (newName || '').trim();
+        if (!trimmedName) return;
+
+        try {
+            const tokenData = JSON.parse(localStorage.getItem('accessToken'));
+            const token = tokenData?.access;
+
+            const response = await fetch('http://localhost:8000/api/categories/update/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    id: categoryId,
+                    name: trimmedName
+                })
+            });
+
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                alert(data.message || 'Failed to rename category');
+                return;
+            }
+
+            setCategories(prev =>
+                prev.map(c => (c.id === categoryId ? { ...c, name: trimmedName } : c))
+            );
+
+            if (selectedCategory && selectedCategory.id === categoryId) {
+                setSelectedCategory(prev => ({ ...prev, name: trimmedName }));
+            }
+
+            setEditingCategory(null);
+            await refetchCategories();
+        } catch (error) {
+            console.error('Error renaming category:', error);
+        }
     };
 
     // Game functions (Admin only)
