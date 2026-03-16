@@ -103,3 +103,14 @@ def create_order(request):
             {"success": False, "message": str(e)},
             status=500
         )
+    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+# ADMIN ONLY - returns ALL orders from ALL users
+def get_all_orders(request):
+    if not request.user.is_staff and not request.user.is_superuser:
+        return Response({"success": False, "message": "Admin only"}, status=403)
+    
+    orders = Order.objects.all().order_by('-created_at')  # Newest first
+    serializer = OrderSerializer(orders, many=True)
+    return Response(serializer.data)

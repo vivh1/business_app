@@ -1,0 +1,197 @@
+/* Admin Orders Page */
+.admin-orders-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.admin-orders-page .main-content {
+    flex: 1;
+    padding: 100px 2rem 2rem;
+}
+
+.admin-orders-page .content-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.admin-orders-page .filters-container {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    padding: 1.5rem;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.admin-orders-page .filter-group {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.admin-orders-page .filter-label {
+    color: white;
+    font-weight: bold;
+}
+
+.admin-orders-page .filter-select {
+    padding: 0.5rem;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    background: white;
+    min-width: 150px;
+}
+
+.admin-orders-page .search-container {
+    position: relative;
+    flex: 1;
+}
+
+.admin-orders-page .search-input {
+    width: 100%;
+    padding: 0.5rem 2rem 0.5rem 1rem;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    font-size: 0.95rem;
+}
+
+.admin-orders-page .search-clear-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    color: #999;
+}
+
+/* Orders List - Reuse existing styles from ProfilePage */
+.admin-orders-page .orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.admin-orders-page .order-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.admin-orders-page .order-header {
+    background: #f8f9fa;
+    padding: 1rem;
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 1rem;
+    align-items: center;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.admin-orders-page .order-user {
+    color: #15aacf;
+    font-weight: 500;
+}
+
+.admin-orders-page .order-date {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.admin-orders-page .order-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.admin-orders-page .status-cancelled {
+    background: #dc3545;
+    color: white;
+}
+
+.admin-orders-page .order-items-list {
+    padding: 1rem;
+}
+
+.admin-orders-page .order-item-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.admin-orders-page .order-item-row:last-child {
+    border-bottom: none;
+}
+
+.admin-orders-page .item-name {
+    flex: 2;
+    color: #333;
+}
+
+.admin-orders-page .item-quantity {
+    flex: 0.5;
+    color: #666;
+}
+
+.admin-orders-page .item-price {
+    flex: 0.5;
+    text-align: right;
+    font-weight: 600;
+    color: #28a745;
+}
+
+.admin-orders-page .order-footer {
+    background: #f8f9fa;
+    padding: 1rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    border-top: 1px solid #f0f0f0;
+}
+
+.admin-orders-page .order-total-label {
+    font-weight: bold;
+    color: #333;
+}
+
+.admin-orders-page .order-total {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #28a745;
+}
+
+.admin-orders-page .total-orders {
+    margin-top: 2rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    text-align: right;
+    color: #666;
+    font-weight: 500;
+}
+
+.admin-orders-page .no-orders {
+    text-align: center;
+    padding: 3rem;
+    background: white;
+    border-radius: 10px;
+    color: #666;
+}
+
+.admin-orders-page .loading-spinner {
+    text-align: center;
+    padding: 3rem;
+    color: #666;
+}

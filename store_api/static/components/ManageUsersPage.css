@@ -51,7 +51,7 @@
 
 .table-header {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 100px;
+    grid-template-columns: 1fr 1fr 1fr 200px;
     padding: 1rem;
     background: #f8f9fa;
     font-weight: bold;
@@ -60,10 +60,15 @@
 
 .table-row {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 100px;
+    grid-template-columns: 1fr 1fr 1fr 200px;
     padding: 1rem;
     border-bottom: 1px solid #f0f0f0;
     align-items: center;
+}
+
+.table-row div:last-child {
+    display: flex;
+    gap: 10px;
 }
 
 .you-badge {
@@ -104,6 +109,22 @@
 
 .delete-btn:hover {
     background: #c82333;
+}
+
+.view-orders-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.view-orders-btn:hover {
+    background: #5a67d8;
 }
 
 .loading-text {

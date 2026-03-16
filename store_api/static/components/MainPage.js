@@ -34,6 +34,8 @@ function MainPage({ user, onLogout }) {
     const [categories, setCategories] = useState([]);
 
     const [showProfile, setShowProfile] = useState(false);
+
+    const [showAdminOrders, setShowAdminOrders] = useState(false);
     
     // Categories data
     useEffect(() => {
@@ -651,6 +653,10 @@ function MainPage({ user, onLogout }) {
         setSelectedGame(null);
     };
 
+    const handleAdminOrdersClick = () => {
+        setShowAdminOrders(true);
+        setShowDropdown(false);
+    };
     const handleAddToCart = (gameWithDetails) => {
         const existingCart = JSON.parse(localStorage.getItem('cart')) || [];
         
@@ -691,6 +697,14 @@ function MainPage({ user, onLogout }) {
         setCartCount(cart.reduce((total, item) => total + item.quantity, 0));
     }, []);
     
+    if (showAdminOrders) {
+        return (
+            <AdminOrdersPage
+                user={user}
+                onBack={() => setShowAdminOrders(false)}
+            />
+        );
+    }
 
     if (showAddGamePage && selectedCategory) {
         return (
@@ -988,6 +1002,9 @@ function MainPage({ user, onLogout }) {
                                             <div className="dropdown-divider"></div>
                                             <div className="admin-item" onClick={handleManageUsersClick}>
                                                 Manage Users
+                                            </div>
+                                            <div className="admin-item" onClick={handleAdminOrdersClick}>
+                                                View All Orders
                                             </div>
                                         </>
                                     )}

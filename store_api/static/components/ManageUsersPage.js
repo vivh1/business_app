@@ -96,14 +96,22 @@ function ManageUsersPage({ onDeleteUser, currentUser }) {
                                     </span>
                                 </div>
                                 <div>
-                                    {userItem.id !== currentUser.id && (
+                                {userItem.id !== currentUser.id && (
+                                    <>
+                                        <button 
+                                            className="view-orders-btn"
+                                            onClick={() => handleViewOrders(userItem)}
+                                        >
+                                            View Orders
+                                        </button>
                                         <button 
                                             className="delete-btn"
                                             onClick={() => handleDelete(userItem.id)}
                                         >
                                             Delete
                                         </button>
-                                    )}
+                                    </>
+                                )}
                                 </div>
                             </div>
                         ))}
