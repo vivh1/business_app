@@ -116,7 +116,7 @@ def users_api(request):
 
     user_list = user_service.get_all_users()
 
-    users_data = [{"username": user.username, "email": user.email,"admin": user.is_superuser} for user in user_list]
+    users_data = [{"id": user.id, "username": user.username, "email": user.email, "admin": user.is_superuser} for user in user_list]
 
     return JsonResponse({"users": users_data})
 
@@ -220,3 +220,25 @@ def profile_api(request):
 
     # Method not allowed
     return JsonResponse({"detail": "Method not allowed"}, status=405)
+
+@csrf_exempt
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_user_api(request, user_id):
+    if request.method != 'DELETE':
+        return JsonResponse({"detail": "Method not allowed"}, status=405)
+    
+    # Only allow admin to delete users
+    if not request.user.is_staff and not request.user.is_superuser:
+        return JsonResponse({"success": False, "message": "Admin only"}, status=403)
+    
+    try:
+        user = User.objects.get(id=user_id)
+        # Don't allow deleting yourself
+        if user.id == request.user.id:
+            return JsonResponse({"success": False, "message": "Cannot delete yourself"}, status=400)
+        
+        user.delete()
+        return JsonResponse({"success": True, "message": "User deleted successfully"})
+    except User.DoesNotExist:
+        return JsonResponse({"success": False, "message": "User not found"}, status=404)

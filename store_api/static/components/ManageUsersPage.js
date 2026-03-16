@@ -5,16 +5,19 @@ function ManageUsersPage({ onDeleteUser, currentUser }) {
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState('');
 
+    const [showUserOrders, setShowUserOrders] = useState(false);
+    const [selectedTargetUser, setSelectedTargetUser] = useState(null);
+
     const fetchUsers = async () => {
         try {
-            //const token = JSON.parse(localStorage.getItem('accessToken')).access;
+            const token = JSON.parse(localStorage.getItem('accessToken')).access;
 
             setLoading(true);
             const response = await fetch('http://localhost:8000/api/users/', {
                 method: 'GET',
                 headers: { 
                     'Content-Type': 'application/json',
-                    //'Authorization': `Bearer  ${token}`
+                    'Authorization': `Bearer  ${token}`
                  }
             });
             
@@ -36,27 +39,55 @@ function ManageUsersPage({ onDeleteUser, currentUser }) {
         fetchUsers();
     }, []);
 
+    const handleViewOrders = (user) => {
+        setSelectedTargetUser(user);
+        setShowUserOrders(true);
+    };
+
+    const handleBackFromUserOrders = () => {
+        setShowUserOrders(false);
+        setSelectedTargetUser(null);
+    };
+
     const handleDelete = async (userId) => {
         if (window.confirm('Are you sure you want to delete this user?')) {
             try {
+                const tokenData = JSON.parse(localStorage.getItem('accessToken'));
+                const token = tokenData?.access;
+                
                 const response = await fetch(`http://localhost:8000/api/users/${userId}/`, {
                     method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
                 });
+                
+                const data = await response.json();
                 
                 if (response.ok) {
                     setUsers(users.filter(u => u.id !== userId));
                     setMessage('User deleted successfully');
                     setTimeout(() => setMessage(''), 3000);
                 } else {
-                    setMessage('Failed to delete user');
+                    setMessage(data.message || 'Failed to delete user');
                 }
             } catch (error) {
+                console.error('Delete error:', error);
                 setMessage('Cannot connect to server to delete user');
             }
         }
     };
 
+    if (showUserOrders && selectedTargetUser) {
+        return (
+            <UserOrdersPage
+                user={currentUser}
+                targetUser={selectedTargetUser}
+                onBack={handleBackFromUserOrders}
+            />
+        );
+    }
     return (
         <div className="manage-users-page">
             <div className="manage-users-container">

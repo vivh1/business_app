@@ -7,5 +7,6 @@ urlpatterns = [
     path('register/', views.register_api, name='register_api'),
     path('profile/', views.profile_api, name='profile_api'),
     path('users/',views.users_api, name='users_api'),
-    path('update/',views.update_api,name='update_api')
+    path('update/',views.update_api,name='update_api'),
+    path('users/<int:user_id>/', views.delete_user_api, name='delete-user'),
 ]

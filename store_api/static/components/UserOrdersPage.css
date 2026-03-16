@@ -1,0 +1,169 @@
+/* User Orders Page - Match other order lists */
+.user-orders-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.user-orders-page .main-content {
+    flex: 1;
+    padding: 100px 2rem 2rem;
+}
+
+.user-orders-page .content-wrapper {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.user-orders-page .filters-container {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    padding: 1.5rem;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.user-orders-page .filter-group {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.user-orders-page .filter-label {
+    color: white;
+    font-weight: bold;
+}
+
+.user-orders-page .filter-select {
+    padding: 0.5rem;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    background: white;
+    min-width: 150px;
+}
+
+.user-orders-page .orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.user-orders-page .order-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.user-orders-page .order-header {
+    background: #f8f9fa;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.user-orders-page .order-id {
+    font-weight: bold;
+    color: #333;
+}
+
+.user-orders-page .order-date {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.user-orders-page .order-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.user-orders-page .status-pending {
+    background: #ffc107;
+    color: #333;
+}
+
+.user-orders-page .status-paid {
+    background: #28a745;
+    color: white;
+}
+
+.user-orders-page .status-cancelled {
+    background: #dc3545;
+    color: white;
+}
+
+.user-orders-page .order-items-list {
+    padding: 1rem;
+}
+
+.user-orders-page .order-item-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.user-orders-page .order-item-row:last-child {
+    border-bottom: none;
+}
+
+.user-orders-page .item-name {
+    flex: 2;
+    color: #333;
+}
+
+.user-orders-page .item-quantity {
+    flex: 0.5;
+    color: #666;
+}
+
+.user-orders-page .item-price {
+    flex: 0.5;
+    text-align: right;
+    font-weight: 600;
+    color: #28a745;
+}
+
+.user-orders-page .order-footer {
+    background: #f8f9fa;
+    padding: 1rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    border-top: 1px solid #f0f0f0;
+}
+
+.user-orders-page .order-total-label {
+    font-weight: bold;
+    color: #333;
+}
+
+.user-orders-page .order-total {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #28a745;
+}
+
+.user-orders-page .no-orders {
+    text-align: center;
+    padding: 3rem;
+    background: white;
+    border-radius: 10px;
+    color: #666;
+}
+
+.user-orders-page .loading-spinner {
+    text-align: center;
+    padding: 3rem;
+    color: #666;
+}
