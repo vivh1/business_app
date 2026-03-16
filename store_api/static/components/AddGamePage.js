@@ -9,7 +9,7 @@ function AddGamePage({ categoryId, categoryName, user, onBack, onGameAdded }) {
         genre: categoryName || '',
         image: '',
         description: '',
-        price: '29.99'
+        price: '30.00'
     });
     
     const [loading, setLoading] = useState(false);
@@ -99,7 +99,7 @@ function AddGamePage({ categoryId, categoryName, user, onBack, onGameAdded }) {
                 developer: formData.developer || 'Unknown',
                 genre: formData.genre,
                 description: formData.description || '',
-                price: parseFloat(formData.price) || 29.99,
+                price: parseFloat(formData.price) || 30.00,
                 image: imagePreview || ''
             });
 
@@ -116,7 +116,7 @@ function AddGamePage({ categoryId, categoryName, user, onBack, onGameAdded }) {
                     developer: formData.developer || 'Unknown',
                     genre: formData.genre,
                     description: formData.description || '',
-                    price: parseFloat(formData.price) || 29.99,
+                    price: parseFloat(formData.price) || 30.00,
                     image: imagePreview || ''
                 })
             });
@@ -138,7 +138,7 @@ function AddGamePage({ categoryId, categoryName, user, onBack, onGameAdded }) {
                     genre: categoryName || '',
                     image: '',
                     description: '',
-                    price: '29.99'
+                    price: '30.00'
                 });
                 setImagePreview(null);
                 setImageFile(null);
@@ -174,7 +174,7 @@ function AddGamePage({ categoryId, categoryName, user, onBack, onGameAdded }) {
             
             <div className="main-content">
                 <div className="content-wrapper">
-                    <h1 className="page-title">Add New Game to {categoryName}</h1>
+                    <h1 className="page-title-grey">Add New Game to {categoryName}</h1>
                     
                     <div className="add-game-container">
                         <form onSubmit={handleSubmit} className="add-game-form">

@@ -301,17 +301,19 @@ function MainPage({ user, onLogout }) {
         }
     };
 
-    const handleCategoryImageChange = (e, categoryId) => {
+    const handleCategoryImageChange = async (e) => {
+        console.log('File selected:', e.target.files[0]);
         const file = e.target.files[0];
         if (file) {
-            setCategoryImageFile(file);
+            setNewCategoryImageFile(file);
             const reader = new FileReader();
             reader.onloadend = () => {
-                setEditingCategoryImagePreview(reader.result);
-                setEditingCategoryImage(categoryId);
+
+                setNewCategoryImagePreview(reader.result);
             };
             reader.readAsDataURL(file);
         }
+        await refetchCategories();
     };
 
     const handleSaveCategoryImage = async (categoryId) => {
@@ -330,7 +332,7 @@ function MainPage({ user, onLogout }) {
                 body: JSON.stringify({
                     id: categoryId,
                     image: editingCategoryImagePreview || ''
-                })
+                }),
             });
             
             if (response.ok) {
@@ -359,7 +361,7 @@ function MainPage({ user, onLogout }) {
                     },
                     body: JSON.stringify({
                         id: categoryId,
-                        image: '' // Send empty string to remove image
+                        image: "" // Send empty string to remove image
                     })
                 });
                 
@@ -851,7 +853,7 @@ function MainPage({ user, onLogout }) {
                 
                 <div className="main-content">
                     <div className="content-wrapper">
-                        <h1 className="page-title">{selectedCategory.name} Games</h1>
+                        <h1 className="page-title-white">{selectedCategory.name} Games</h1>
                         
                         <div className="filters-container">
                             <div className="filter-group">
@@ -1056,7 +1058,7 @@ function MainPage({ user, onLogout }) {
             
             <div className="main-content">
                 <div className="content-wrapper">
-                    <h1 className="page-title">Game Categories</h1>
+                    <h1 className="page-title-white">Game Categories</h1>
                     
                     <div className="filters-container">
                         <div className="filter-group">

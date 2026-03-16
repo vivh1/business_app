@@ -100,22 +100,7 @@ function ProfilePage({ user, onBack }) {
                             <div className="banner-placeholder">
                             </div>
                         )}
-                        {user?.is_admin && (
-                            <button className="edit-banner-btn" onClick={() => setEditingBanner(!editingBanner)}>
-                                Edit Banner
-                            </button>
-                        )}
-                        {editingBanner && (
-                            <div className="banner-upload">
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleBannerChange}
-                                    id="banner-upload"
-                                />
-                                <label htmlFor="banner-upload">Choose Banner Image</label>
-                            </div>
-                        )}
+
                     </div>
 
                     {/* Profile Info Section */}
@@ -126,22 +111,6 @@ function ProfilePage({ user, onBack }) {
                             ) : (
                                 <div className="avatar-placeholder">
                                     {user.username.charAt(0).toUpperCase()}
-                                </div>
-                            )}
-                            {user?.is_admin && (
-                                <button className="edit-avatar-btn" onClick={() => setEditingAvatar(!editingAvatar)}>
-                                    Edit Avatar
-                                </button>
-                            )}
-                            {editingAvatar && (
-                                <div className="avatar-upload">
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleAvatarChange}
-                                        id="avatar-upload"
-                                    />
-                                    <label htmlFor="avatar-upload">Choose Avatar Image</label>
                                 </div>
                             )}
                         </div>

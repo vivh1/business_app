@@ -80,7 +80,7 @@ function CheckoutPage({ user, cart, onBack, onOrderPlaced }) {
             
             <div className="main-content">
                 <div className="content-wrapper">
-                    <h1 className="page-title">Checkout</h1>
+                    <h1 className="page-title-grey">Checkout</h1>
                     
                     <div className="checkout-container">
                         <div className="order-summary">
