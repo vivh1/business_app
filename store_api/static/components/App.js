@@ -5,47 +5,94 @@ function App() {
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(null);
 
+    useEffect(() => {
+        const loadUser = () => {
+            try {
+                const savedUser = localStorage.getItem('user');
+                const savedToken = localStorage.getItem('accessToken');
+                const loginTime = localStorage.getItem('loginTime');
+                
+                // Check if this is a fresh server start (no appInitialized in session)
+                const isFreshStart = !sessionStorage.getItem('appInitialized');
+                
+                if (isFreshStart) {
+                    // Fresh server start - mark as initialized
+                    sessionStorage.setItem('appInitialized', 'true');
+                    
+                    // Only clear if there's no valid login from this session
+                    if (!savedUser || !savedToken || !loginTime) {
+                        localStorage.clear();
+                        setCurrentUser(null);
+                    } else {
+                        // Check if login is from this browser session (within last 24h)
+                        const timeSinceLogin = Date.now() - parseInt(loginTime);
+                        if (timeSinceLogin < 24 * 60 * 60 * 1000) { // 24 hours
+                            setCurrentUser(JSON.parse(savedUser));
+                        } else {
+                            localStorage.clear();
+                            setCurrentUser(null);
+                        }
+                    }
+                } else {
+                    // Normal refresh - restore user if valid
+                    if (savedUser && savedToken) {
+                        setCurrentUser(JSON.parse(savedUser));
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading user:', error);
+                localStorage.clear();
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        
+        loadUser();
+    }, []);
+
     // Save state before refresh
     useEffect(() => {
         const handleBeforeUnload = () => {
-            const stateToSave = {
-                user: currentUser,
-                page: currentPage
-            };
-            sessionStorage.setItem('appState', JSON.stringify(stateToSave));
+            if (currentUser) {
+                const stateToSave = {
+                    page: currentPage
+                };
+                sessionStorage.setItem('appState', JSON.stringify(stateToSave));
+            }
         };
         window.addEventListener('beforeunload', handleBeforeUnload);
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [currentUser, currentPage]);
 
-    // Restore state on load
+    // Restore page state after load
     useEffect(() => {
-        const savedUser = localStorage.getItem('user');
-        const savedState = sessionStorage.getItem('appState');
-        
-        if (savedUser) {
-            setCurrentUser(JSON.parse(savedUser));
+        if (!isLoading && currentUser) {
+            const savedState = sessionStorage.getItem('appState');
+            if (savedState) {
+                try {
+                    const parsed = JSON.parse(savedState);
+                    setCurrentPage(parsed.page);
+                    sessionStorage.removeItem('appState');
+                } catch (e) {
+                    console.error('Error parsing saved state:', e);
+                }
+            }
         }
-        
-        if (savedState) {
-            const parsed = JSON.parse(savedState);
-            setCurrentPage(parsed.page);
-            sessionStorage.removeItem('appState');
-        }
-        
-        setIsLoading(false);
-    }, []);
+    }, [isLoading, currentUser]);
 
     const handleLogin = (user) => {
         setCurrentUser(user);
         localStorage.setItem('user', JSON.stringify(user));
+        localStorage.setItem('loginTime', Date.now().toString());
     };
 
     const handleLogout = () => {
         setCurrentUser(null);
         localStorage.removeItem('user');
         localStorage.removeItem('accessToken');
+        localStorage.removeItem('loginTime');
         sessionStorage.clear();
+        setCurrentPage(null);
     };
 
     const handlePageChange = (page) => {
@@ -53,10 +100,9 @@ function App() {
     };
 
     if (isLoading) {
-        return <div>Loading...</div>;
+        return <div className="loading-screen">Loading...</div>;
     }
 
-    // Pass handlePageChange to all pages so they can update the current page
     return (
         <div>
             {!currentUser ? (

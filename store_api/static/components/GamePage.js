@@ -28,14 +28,47 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
         }
     };
 
-    const handleAddToCart = () => {
-        onAddToCart({
-            ...game,
-            categoryName,
-            quantity,
-        });
-        setAddedToCart(true);
-        setTimeout(() => setAddedToCart(false), 2000);
+    const handleAddToCart = async () => {
+        console.log('Add to cart clicked');
+        console.log('Game:', game);
+        console.log('Quantity:', quantity);
+        
+        try {
+            const tokenData = JSON.parse(localStorage.getItem('accessToken'));
+            const token = tokenData?.access;
+            
+            console.log('Token:', token ? 'exists' : 'missing');
+            
+            const requestBody = {
+                product_id: game.id,
+                quantity: quantity
+            };
+            console.log('Sending data:', requestBody);
+            
+            const response = await fetch('http://localhost:8000/api/cart/add/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(requestBody)
+            });
+            
+            console.log('Response status:', response.status);
+            
+            const data = await response.json();
+            console.log('Response data:', data);
+            
+            if (response.ok) {
+                setAddedToCart(true);
+                window.dispatchEvent(new Event('storage'));
+                setTimeout(() => setAddedToCart(false), 2000);
+            } else {
+                console.error('Error adding to cart:', data);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
     };
 
     const handleSaveDescription = () => {
@@ -265,7 +298,6 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
                                                 disabled={!game.quantity || game.quantity === 0}
                                             />
                                         </div>
-                                        
                                         <button 
                                             className={`add-to-cart-btn ${addedToCart ? 'added' : ''}`}
                                             onClick={handleAddToCart}

@@ -22,12 +22,18 @@ function CheckoutPage({ user, cart, onBack, onOrderPlaced }) {
         try {
             const tokenData = JSON.parse(localStorage.getItem('accessToken'));
             const token = tokenData?.access;
+            
+            console.log('Token:', token ? 'exists' : 'missing');
+            console.log('Cart items:', cart);
 
             const orderItems = cart.map(item => ({
-                product: item.id,
+                product: item.product,
                 quantity: item.quantity,
                 price_at_purchase: parseFloat(item.price)
             }));
+            
+            console.log('Order items being sent:', orderItems);
+            console.log('Total price:', calculateTotal());
 
             const response = await fetch('http://localhost:8000/api/create/', {
                 method: 'POST',
@@ -41,20 +47,37 @@ function CheckoutPage({ user, cart, onBack, onOrderPlaced }) {
                 })
             });
 
-            const data = await response.json();
+            console.log('Response status:', response.status);
+            
+            const text = await response.text();
+            console.log('Raw response:', text);
+            
+            let data;
+            try {
+                data = JSON.parse(text);
+                console.log('Parsed data:', data);
+            } catch (e) {
+                console.error('Failed to parse JSON:', e);
+                setMessage('Server error: ' + text.substring(0, 100));
+                setLoading(false);
+                return;
+            }
 
             if (response.ok) {
                 setMessage('Your order has been placed successfully!');
                 
-                // Clear cart from localStorage
-                localStorage.setItem('cart', JSON.stringify([]));
+                // Clear cart from backend
+                await fetch('http://localhost:8000/api/cart/clear/', {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
                 
-                // Pass the order data back to parent
                 if (onOrderPlaced) {
                     onOrderPlaced(data);
                 }
                 
-                // Don't call onBack() here - let the parent handle navigation after message
                 setLoading(false);
             } else {
                 setMessage(data.message || 'Failed to place order');
@@ -88,10 +111,9 @@ function CheckoutPage({ user, cart, onBack, onOrderPlaced }) {
                             
                             <div className="order-items">
                                 {cart.map(item => (
-                                    <div key={`${item.id}-${item.platform}`} className="order-item">
+                                    <div key={item.id} className="order-item">
                                         <div className="order-item-details">
-                                            <h4>{item.name}</h4>
-                                            <p>Platform: {item.platform || 'PC'}</p>
+                                            <h4>{item.product_title}</h4>
                                             <p>Quantity: {item.quantity}</p>
                                         </div>
                                         <div className="order-item-price">
