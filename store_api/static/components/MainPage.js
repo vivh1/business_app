@@ -714,7 +714,7 @@ function MainPage({ user, onLogout }) {
             const formatted = Object.entries(grouped).map(([genre, games], index) => ({
                 id: index + 1,
                 name: genre,
-                image: games[0]?.image || '',
+                image: categoryImage,
                 games: games
             }));
 
@@ -763,8 +763,9 @@ function MainPage({ user, onLogout }) {
         console.log('Cart count updated to:', total);
     };
 
-    const handleCategoryClick = (category) => {
+    const handleCategoryClick = async (category) => {
         setSelectedCategory(category);
+        await refetchProducts();
     };
 
     useEffect(() => {
