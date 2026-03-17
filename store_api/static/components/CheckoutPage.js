@@ -4,10 +4,18 @@ function CheckoutPage({ user, cart, onBack, onOrderPlaced }) {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
 
-    const calculateTotal = () => {
+    const calculateSubtotal = () => {
         return cart.reduce((total, item) => {
             return total + (parseFloat(item.price) * item.quantity);
-        }, 0).toFixed(2);
+        }, 0);
+    };
+
+    const calculateTax = () => {
+        return calculateSubtotal() * 0.08;
+    };
+
+    const calculateTotal = () => {
+        return calculateSubtotal() + calculateTax();
     };
 
     const handlePlaceOrder = async () => {
@@ -123,9 +131,19 @@ function CheckoutPage({ user, cart, onBack, onOrderPlaced }) {
                                 ))}
                             </div>
                             
+                            <div className="summary-row">
+                                <span>Subtotal:</span>
+                                <span>${calculateSubtotal().toFixed(2)}</span>
+                            </div>
+                            
+                            <div className="summary-row">
+                                <span>Tax (8%):</span>
+                                <span>${calculateTax().toFixed(2)}</span>
+                            </div>
+                            
                             <div className="order-total">
                                 <strong>Total:</strong>
-                                <span>${calculateTotal()}</span>
+                                <span>${calculateTotal().toFixed(2)}</span>
                             </div>
                         </div>
                         
