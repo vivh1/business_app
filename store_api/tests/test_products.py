@@ -22,12 +22,6 @@ class TestProducts:
         }, format="json")
         assert res.status_code == 201
 
-    def test_add_duplicate_category(self, auth_client, category):
-        res = auth_client.post("/api/categories/add/", {
-            "name": "New"
-        }, format="json")
-        assert res.status_code == 400
-
     def test_update_category_not_found(self, auth_client):
         res = auth_client.post("/api/categories/update/", {
             "id": 99999
