@@ -381,34 +381,6 @@ function MainPage({ user, onLogout }) {
         }
     };
 
-    const handleRemoveCategoryImage = async (categoryId) => {
-        if (!user.is_admin) return;
-        if (window.confirm('Are you sure you want to remove this category image?')) {
-            try {
-                const tokenData = JSON.parse(localStorage.getItem('accessToken'));
-                const token = tokenData?.access;
-                
-                const response = await fetch('http://localhost:8000/api/categories/update/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        id: categoryId,
-                        image: "" // Send empty string to remove image
-                    })
-                });
-                
-                if (response.ok) {
-                    await refetchCategories();
-                }
-            } catch (error) {
-                console.error('Error removing category image:', error);
-            }
-        }
-    };
-
     const handleDeleteCategory = async (categoryId) => {
         if (!user.is_admin) return;
         if (window.confirm('Are you sure you want to delete this category and all its games?')) {
@@ -439,7 +411,6 @@ function MainPage({ user, onLogout }) {
         }
     };
 
-    // ...existing code...
     const handleRenameCategory = async (categoryId, newName) => {
         if (!user.is_admin) return;
 
@@ -462,22 +433,37 @@ function MainPage({ user, onLogout }) {
                 })
             });
 
-            const data = await response.json().catch(() => ({}));
-            if (!response.ok) {
-                alert(data.message || 'Failed to rename category');
-                return;
+            const data = await response.json();
+
+            if (response.ok) {
+                // Update category name and all games in that category
+                setCategories(prevCategories => 
+                    prevCategories.map(c => {
+                        if (c.id === categoryId) {
+                            // Update category name and all its games' genre
+                            const updatedGames = c.games.map(game => ({
+                                ...game,
+                                genre: trimmedName
+                            }));
+                            return { ...c, name: trimmedName, games: updatedGames };
+                        }
+                        return c;
+                    })
+                );
+
+                // If this category is currently selected, update it too
+                if (selectedCategory && selectedCategory.id === categoryId) {
+                    setSelectedCategory(prev => ({
+                        ...prev,
+                        name: trimmedName,
+                        games: prev.games.map(game => ({ ...game, genre: trimmedName }))
+                    }));
+                }
+
+                setEditingCategory(null);
+            } else {
+                console.error('Rename failed:', data);
             }
-
-            setCategories(prev =>
-                prev.map(c => (c.id === categoryId ? { ...c, name: trimmedName } : c))
-            );
-
-            if (selectedCategory && selectedCategory.id === categoryId) {
-                setSelectedCategory(prev => ({ ...prev, name: trimmedName }));
-            }
-
-            setEditingCategory(null);
-            await refetchCategories();
         } catch (error) {
             console.error('Error renaming category:', error);
         }
@@ -546,6 +532,29 @@ function MainPage({ user, onLogout }) {
     const handleRenameGame = (categoryId, gameId, newName) => {
         if (!user.is_admin) return;
         if (newName.trim()) {
+            // Update local state immediately
+            setCategories(categories.map(c => 
+                c.id === categoryId 
+                    ? { 
+                        ...c, 
+                        games: c.games.map(g => 
+                            g.id === gameId ? { ...g, title: newName, name: newName } : g
+                        )
+                    } 
+                    : c
+            ));
+            
+            // Also update selectedCategory if we're in that category view
+            if (selectedCategory && selectedCategory.id === categoryId) {
+                setSelectedCategory({
+                    ...selectedCategory,
+                    games: selectedCategory.games.map(g =>
+                        g.id === gameId ? { ...g, title: newName, name: newName } : g
+                    )
+                });
+            }
+            
+            // Send to backend
             handleUpdateGame(gameId, { title: newName });
         }
         setEditingGame(null);
@@ -1348,14 +1357,6 @@ function MainPage({ user, onLogout }) {
                                                     >
                                                         Save
                                                     </button>
-                                                    {category.image && (
-                                                        <button 
-                                                            className="btn-delete" 
-                                                            onClick={() => handleRemoveCategoryImage(category.id)}
-                                                        >
-                                                            Remove
-                                                        </button>
-                                                    )}
                                                     <button 
                                                         className="btn-cancel" 
                                                         onClick={() => {
@@ -1380,14 +1381,6 @@ function MainPage({ user, onLogout }) {
                                                 >
                                                     {category.image ? 'Change Image' : 'Add Image'}
                                                 </button>
-                                                {category.image && (
-                                                    <button 
-                                                        className="btn-delete" 
-                                                        onClick={() => handleRemoveCategoryImage(category.id)}
-                                                    >
-                                                        Remove Image
-                                                    </button>
-                                                )}
                                             </div>
                                         )}
                                     </div>
