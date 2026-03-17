@@ -137,8 +137,7 @@
 }
 
 .save-btn,
-.save-another-btn,
-.save-continue-btn {
+.cancel-btn {
     padding: 0.75rem 1.5rem;
     border: none;
     border-radius: 8px;
@@ -146,6 +145,8 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
+    min-width: 120px; /* Ensures both buttons have same minimum width */
+    text-align: center;
 }
 
 .save-btn {
@@ -158,29 +159,18 @@
     transform: translateY(-2px);
 }
 
-.save-another-btn {
-    background: #17a2b8;
+.cancel-btn {
+    background: #6c757d;
     color: white;
 }
 
-.save-another-btn:hover:not(:disabled) {
-    background: #138496;
-    transform: translateY(-2px);
-}
-
-.save-continue-btn {
-    background: #ffc107;
-    color: #333;
-}
-
-.save-continue-btn:hover:not(:disabled) {
-    background: #e0a800;
+.cancel-btn:hover:not(:disabled) {
+    background: #5a6268;
     transform: translateY(-2px);
 }
 
 .save-btn:disabled,
-.save-another-btn:disabled,
-.save-continue-btn:disabled {
+.cancel-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;

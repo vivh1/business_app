@@ -39,6 +39,12 @@ function CartPage({ user, onBack, onUpdateCart }) {
     const updateQuantity = async (itemId, newQuantity) => {
         if (newQuantity < 1) return;
         
+        // Optimistically update local state
+        const updatedItems = cartItems.map(item => 
+            item.id === itemId ? { ...item, quantity: newQuantity } : item
+        );
+        setCartItems(updatedItems);
+        
         try {
             const tokenData = JSON.parse(localStorage.getItem('accessToken'));
             const token = tokenData?.access;
@@ -52,12 +58,17 @@ function CartPage({ user, onBack, onUpdateCart }) {
                 body: JSON.stringify({ quantity: newQuantity })
             });
             
-            if (response.ok) {
-                await loadCart(); // Reload cart from backend
+            if (!response.ok) {
+                // If update fails, revert to original state by reloading
+                await loadCart();
+            } else {
+                // Update cart count in navbar
                 window.dispatchEvent(new Event('storage'));
             }
         } catch (error) {
             console.error('Error updating quantity:', error);
+            // Revert on error
+            await loadCart();
         }
     };
 

@@ -1,4 +1,4 @@
-const { useState } = React;
+const { useState, useEffect } = React;
 
 function AddGamePage({ categoryId, categoryName, user, onBack, onGameAdded }) {
     const [formData, setFormData] = useState({
@@ -44,7 +44,6 @@ function AddGamePage({ categoryId, categoryName, user, onBack, onGameAdded }) {
 
         fetchGenres();
     }, []);
-
 
     const handleChange = (e) => {
         const { name, value, type } = e.target;
@@ -314,11 +313,8 @@ function AddGamePage({ categoryId, categoryName, user, onBack, onGameAdded }) {
                                 <button type="submit" className="save-btn" disabled={loading}>
                                     {loading ? 'Saving...' : 'SAVE'}
                                 </button>
-                                <button type="button" className="save-another-btn" disabled={loading}>
-                                    Save and add another
-                                </button>
-                                <button type="button" className="save-continue-btn" disabled={loading}>
-                                    Save and continue editing
+                                <button type="button" className="cancel-btn" onClick={onBack} disabled={loading}>
+                                    Cancel
                                 </button>
                             </div>
                         </form>
