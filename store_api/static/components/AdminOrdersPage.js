@@ -74,7 +74,7 @@ function AdminOrdersPage({ user, onBack }) {
             
             <div className="main-content">
                 <div className="content-wrapper">
-                    <h1 className="page-title">All Orders</h1>
+                    <h1 className="page-title-grey">All Orders</h1>
                     
                     <div className="filters-container">
                         <div className="filter-group">
@@ -119,7 +119,7 @@ function AdminOrdersPage({ user, onBack }) {
                             {displayedOrders.map(order => (
                                 <div key={order.id} className="order-card">
                                     <div className="order-header">
-                                        <span className="order-id">Order #{order.id}</span>
+                                        <span className="order-id">Order ID: #{order.id}</span>
                                         <span className="order-user">
                                             User: {order.user?.username || 'Unknown'}
                                         </span>

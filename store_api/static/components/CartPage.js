@@ -113,7 +113,7 @@ function CartPage({ user, onBack, onUpdateCart }) {
             
             <div className="main-content">
                 <div className="content-wrapper">
-                    <h1 className="page-title">Your Shopping Cart</h1>
+                    <h1 className="page-title-grey">Your Shopping Cart</h1>
                     
                     {loading ? (
                         <div className="loading-spinner">Loading cart...</div>

@@ -96,14 +96,6 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
         }
     };
 
-    const handleRemoveImage = () => {
-        // Call the parent update function
-        onUpdateGame(game.id, { image: "" });
-        setTempImage("");
-        setEditingImage(false);
-        setImageFile(null);
-    };
-
     return (
         <div className="game-details-page">
             <div className="navbar">
@@ -146,15 +138,6 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
                                                 <label htmlFor="image-upload" className="image-upload-label">
                                                     Choose Image
                                                 </label>
-                                                
-                                                {tempImage && (
-                                                    <button 
-                                                        className="btn-delete" 
-                                                        onClick={handleRemoveImage}
-                                                    >
-                                                        Remove Image
-                                                    </button>
-                                                )}
                                                 
                                                 <div className="edit-actions">
                                                     <button className="btn-save" onClick={handleSaveImage}>Save</button>
@@ -234,9 +217,6 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
                                     <span className="game-details-category">
                                         Category: {categoryName}
                                     </span>
-                                    <span className="game-details-id">
-                                        Game #{game.id}
-                                    </span>
                                 </div>
                                 
                                 {/* Price with Admin Controls */}
@@ -266,14 +246,7 @@ function GamePage({ game, categoryName, user, onBack, onAddToCart, onUpdateGame 
                                         <div className="game-details-price">${parseFloat(game.price).toFixed(2)}</div>
                                     )}
                                 </div>
-                                
-                                {/* Stock Quantity Display */}
-                                <div className="game-details-section">
-                                    <h3 className="game-details-section-title">Availability</h3>
-                                    <p className="game-details-stock">
-                                        {game.quantity > 0 ? `${game.quantity} units in stock` : 'Out of stock'}
-                                    </p>
-                                </div>
+
                                 
                                 {/* Quantity and Add to Cart */}
                                 <div className="game-details-section">

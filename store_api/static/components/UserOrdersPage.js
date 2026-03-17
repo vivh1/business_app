@@ -61,7 +61,7 @@ function UserOrdersPage({ user, targetUser, onBack }) {
             
             <div className="main-content">
                 <div className="content-wrapper">
-                    <h1 className="page-title">
+                    <h1 className="page-title-grey">
                         Orders from {targetUser.username}
                     </h1>
                     
@@ -90,7 +90,7 @@ function UserOrdersPage({ user, targetUser, onBack }) {
                             {getSortedOrders().map(order => (
                                 <div key={order.id} className="order-card">
                                     <div className="order-header">
-                                        <span className="order-id">Order #{order.id}</span>
+                                        <span className="order-id">Order ID: #{order.id}</span>
                                         <span className="order-date">{formatDate(order.created_at)}</span>
                                         <span className={`order-status status-${order.status}`}>
                                             {order.status}

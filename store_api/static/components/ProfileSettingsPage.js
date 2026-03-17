@@ -147,7 +147,7 @@ function ProfileSettingsPage({ user, onSave, onCancel }) {
                         <div>
                             <h3 style={{ marginBottom: '1rem', color: '#333' }}>Change Password (Optional)</h3>
                             <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.9rem' }}>
-                                Leave blank if you don't want to change your password
+                                Leave 'New Password' and 'Confirm New Password' blank if you don't want to change your password
                             </p>
                             
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>

@@ -301,17 +301,19 @@ function MainPage({ user, onLogout }) {
         }
     };
 
-    const handleCategoryImageChange = (e, categoryId) => {
+    const handleCategoryImageChange = async (e) => {
+        console.log('File selected:', e.target.files[0]);
         const file = e.target.files[0];
         if (file) {
-            setCategoryImageFile(file);
+            setNewCategoryImageFile(file);
             const reader = new FileReader();
             reader.onloadend = () => {
-                setEditingCategoryImagePreview(reader.result);
-                setEditingCategoryImage(categoryId);
+
+                setNewCategoryImagePreview(reader.result);
             };
             reader.readAsDataURL(file);
         }
+        await refetchCategories();
     };
 
     const handleSaveCategoryImage = async (categoryId) => {
@@ -330,7 +332,7 @@ function MainPage({ user, onLogout }) {
                 body: JSON.stringify({
                     id: categoryId,
                     image: editingCategoryImagePreview || ''
-                })
+                }),
             });
             
             if (response.ok) {
@@ -359,7 +361,7 @@ function MainPage({ user, onLogout }) {
                     },
                     body: JSON.stringify({
                         id: categoryId,
-                        image: '' // Send empty string to remove image
+                        image: "" // Send empty string to remove image
                     })
                 });
                 
@@ -402,13 +404,48 @@ function MainPage({ user, onLogout }) {
         }
     };
 
+    // ...existing code...
     const handleRenameCategory = async (categoryId, newName) => {
         if (!user.is_admin) return;
-        setCategories(categories.map(c => 
-            c.id === categoryId ? { ...c, name: newName } : c
-        ));
-        setEditingCategory(null);
-        await refetchCategories();
+
+        const trimmedName = (newName || '').trim();
+        if (!trimmedName) return;
+
+        try {
+            const tokenData = JSON.parse(localStorage.getItem('accessToken'));
+            const token = tokenData?.access;
+
+            const response = await fetch('http://localhost:8000/api/categories/update/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    id: categoryId,
+                    name: trimmedName
+                })
+            });
+
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                alert(data.message || 'Failed to rename category');
+                return;
+            }
+
+            setCategories(prev =>
+                prev.map(c => (c.id === categoryId ? { ...c, name: trimmedName } : c))
+            );
+
+            if (selectedCategory && selectedCategory.id === categoryId) {
+                setSelectedCategory(prev => ({ ...prev, name: trimmedName }));
+            }
+
+            setEditingCategory(null);
+            await refetchCategories();
+        } catch (error) {
+            console.error('Error renaming category:', error);
+        }
     };
 
     // Game functions (Admin only)
@@ -474,7 +511,7 @@ function MainPage({ user, onLogout }) {
     const handleRenameGame = (categoryId, gameId, newName) => {
         if (!user.is_admin) return;
         if (newName.trim()) {
-            handleUpdateGame(categoryId, gameId, { title: newName });
+            handleUpdateGame(gameId, { title: newName });
         }
         setEditingGame(null);
     };
@@ -816,7 +853,7 @@ function MainPage({ user, onLogout }) {
                 
                 <div className="main-content">
                     <div className="content-wrapper">
-                        <h1 className="page-title">{selectedCategory.name} Games</h1>
+                        <h1 className="page-title-white">{selectedCategory.name} Games</h1>
                         
                         <div className="filters-container">
                             <div className="filter-group">
@@ -1021,7 +1058,7 @@ function MainPage({ user, onLogout }) {
             
             <div className="main-content">
                 <div className="content-wrapper">
-                    <h1 className="page-title">Game Categories</h1>
+                    <h1 className="page-title-white">Game Categories</h1>
                     
                     <div className="filters-container">
                         <div className="filter-group">
