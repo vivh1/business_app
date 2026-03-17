@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 from products.models import Category, Product
+from accounts.models import Profile
 
 
 @pytest.fixture
@@ -12,11 +13,13 @@ def api_client():
 
 @pytest.fixture
 def regular_user(db):
-    return User.objects.create_user(
+    user = User.objects.create_user(
         username="user", 
         password="pass", 
         email="test@user.com"
     )
+    Profile.objects.create(user=user)
+    return user
 
 
 @pytest.fixture
@@ -34,17 +37,19 @@ def get_token(user):
 
 
 @pytest.fixture
-def auth_client(api_client, regular_user):
+def auth_client(regular_user):
+    client = APIClient()
     token = get_token(regular_user)
-    api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
-    return api_client
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+    return client
 
 
 @pytest.fixture
-def admin_client(api_client, admin_user):
+def admin_client(admin_user):
+    client = APIClient()
     token = get_token(admin_user)
-    api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
-    return api_client
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+    return client
 
 
 @pytest.fixture
@@ -67,7 +72,6 @@ def product(db, category):
 def second_product(db, category):
     return Product.objects.create(
         title="Second Game",
-        quantity=5,
         release_date="2026-06-01",
         developer="Tester",
         genre=category,

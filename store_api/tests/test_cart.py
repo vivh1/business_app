@@ -20,6 +20,28 @@ class TestGetCart:
         res = api_client.get("/api/cart/")
         assert res.status_code == 401
 
+    def test_cart_persists_after_logout_and_login(self, auth_client, regular_user, product):
+        # add item to cart
+        auth_client.post("/api/cart/add/", {
+            "product_id": product.id, "quantity": 2
+        }, format="json")
+
+        # logout
+        auth_client.post("/api/logout/")
+
+        # login again with fresh token
+        login_res = auth_client.post("/api/login/", {
+            "username": "user", "password": "pass"
+        }, format="json")
+        new_token = login_res.json()["tokens"]["access"]
+        auth_client.credentials(HTTP_AUTHORIZATION=f"Bearer {new_token}")
+
+        # cart should still have the item
+        res = auth_client.get("/api/cart/")
+        assert res.status_code == 200
+        assert len(res.json()) == 1
+        assert res.json()[0]["quantity"] == 2
+
 
 @pytest.mark.django_db
 class TestAddToCart:
@@ -31,6 +53,14 @@ class TestAddToCart:
         assert res.status_code == 200
         assert res.json()["success"] is True
         assert res.json()["item"]["product_title"] == "Test Game"
+
+    def test_add_item_with_quantity_2(self, auth_client, product):
+        res = auth_client.post("/api/cart/add/", {
+            "product_id": product.id,
+            "quantity": 2
+        }, format="json")
+        assert res.status_code == 200
+        assert res.json()["item"]["quantity"] == 2
 
     def test_add_same_item_increases_quantity(self, auth_client, regular_user, product):
         CartItem.objects.create(user=regular_user, product=product, quantity=1)
@@ -134,7 +164,7 @@ class TestClearCart:
         assert res.status_code == 200
         assert res.json()["success"] is True
         assert CartItem.objects.filter(user=regular_user).count() == 0
-        
+
     def test_clear_cart_unauthenticated(self, api_client):
         res = api_client.delete("/api/cart/clear/")
         assert res.status_code == 401
