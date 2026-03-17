@@ -35,7 +35,7 @@ function CheckoutPage({ user, cart, onBack, onOrderPlaced }) {
             console.log('Order items being sent:', orderItems);
             console.log('Total price:', calculateTotal());
 
-            const response = await fetch('http://localhost:8000/api/create/', {
+            const response = await fetch('http://localhost:8000/api/orders/create/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

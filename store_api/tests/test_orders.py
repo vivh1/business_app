@@ -43,3 +43,23 @@ class TestOrders:
 
         res_admin = admin_client.get("/api/orders/all/")
         assert res_admin.status_code == 200
+
+    def test_create_order_full_flow(self, auth_client, regular_user, product):
+        # add item to cart
+        auth_client.post("/api/cart/add/", {
+            "product_id": product.id, "quantity": 1
+        }, format="json")
+
+        # checkout (clears cart and creates order)
+        checkout_res = auth_client.post("/api/cart/checkout/")
+        assert checkout_res.status_code == 200
+        assert checkout_res.json()["success"] is True
+
+        # verify order appears in user's orders
+        orders_res = auth_client.get("/api/orders/")
+        assert len(orders_res.json()) == 1
+        assert float(orders_res.json()[0]["total_price"]) == float(product.price)
+
+        # verify cart is now empty
+        cart_res = auth_client.get("/api/cart/")
+        assert cart_res.json() == []

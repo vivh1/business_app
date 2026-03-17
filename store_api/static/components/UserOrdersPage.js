@@ -14,7 +14,7 @@ function UserOrdersPage({ user, targetUser, onBack }) {
             const tokenData = JSON.parse(localStorage.getItem('accessToken'));
             const token = tokenData?.access;
 
-            const response = await fetch(`http://localhost:8000/api/user/${targetUser.id}/`, {
+            const response = await fetch(`http://localhost:8000/api/orders/user/${targetUser.id}/`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
