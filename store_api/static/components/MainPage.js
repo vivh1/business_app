@@ -37,6 +37,41 @@ function MainPage({ user, onLogout }) {
 
     const [showAdminOrders, setShowAdminOrders] = useState(false);
     
+
+    const fetchCartCount = async () => {
+        try {
+            const tokenData = JSON.parse(localStorage.getItem('accessToken'));
+            const token = tokenData?.access;
+            
+            const response = await fetch('http://localhost:8000/api/cart/', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const total = data.reduce((sum, item) => sum + item.quantity, 0);
+                setCartCount(total);
+            }
+        } catch (error) {
+            console.error('Error fetching cart count:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchCartCount();
+        
+        const handleStorageChange = () => {
+            fetchCartCount();
+        };
+        
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, []);
+
     // Categories data
     useEffect(() => {
         const fetchCategories = async () => {
@@ -681,8 +716,6 @@ function MainPage({ user, onLogout }) {
     };
 
     const handleGameClick = (game, category) => {
-        console.log('Game clicked:', game);
-        console.log('Category:', category);
         setSelectedGame({ ...game, categoryName: category.name, categoryId: category.id });
     };
 
@@ -694,8 +727,12 @@ function MainPage({ user, onLogout }) {
         setShowAdminOrders(true);
         setShowDropdown(false);
     };
+
     const handleAddToCart = (gameWithDetails) => {
+        console.log('MainPage handleAddToCart received:', gameWithDetails);
+        
         const existingCart = JSON.parse(localStorage.getItem('cart')) || [];
+        console.log('Existing cart:', existingCart);
         
         const existingItemIndex = existingCart.findIndex(item => 
             item.id === gameWithDetails.id
@@ -703,14 +740,18 @@ function MainPage({ user, onLogout }) {
         
         if (existingItemIndex >= 0) {
             existingCart[existingItemIndex].quantity += gameWithDetails.quantity;
+            console.log('Updated existing item:', existingCart[existingItemIndex]);
         } else {
             existingCart.push(gameWithDetails);
+            console.log('Added new item:', gameWithDetails);
         }
         
         localStorage.setItem('cart', JSON.stringify(existingCart));
+        console.log('Cart saved to localStorage');
         
         const total = existingCart.reduce((sum, item) => sum + item.quantity, 0);
         setCartCount(total);
+        console.log('Cart count updated to:', total);
     };
 
     const handleCategoryClick = (category) => {

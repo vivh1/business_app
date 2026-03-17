@@ -3,46 +3,108 @@ const { useState, useEffect } = React;
 function CartPage({ user, onBack, onUpdateCart }) {
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(true);
-
     const [showCheckout, setShowCheckout] = useState(false);
 
     useEffect(() => {
         loadCart();
     }, []);
 
-    const loadCart = () => {
-        const savedCart = JSON.parse(localStorage.getItem('cart')) || [];
-        setCartItems(savedCart);
-        setLoading(false);
+    const loadCart = async () => {
+        try {
+            setLoading(true);
+            const tokenData = JSON.parse(localStorage.getItem('accessToken'));
+            const token = tokenData?.access;
+            
+            const response = await fetch('http://localhost:8000/api/cart/', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Cart data from backend:', data);
+                setCartItems(data);
+                if (onUpdateCart) onUpdateCart(data);
+            }
+        } catch (error) {
+            console.error('Error loading cart:', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const updateQuantity = (itemId, newQuantity) => {
+    const updateQuantity = async (itemId, newQuantity) => {
         if (newQuantity < 1) return;
         
-        const updatedCart = cartItems.map(item => 
-            (item.id === itemId)
-                ? { ...item, quantity: newQuantity } 
-                : item
-        );
+        try {
+            const tokenData = JSON.parse(localStorage.getItem('accessToken'));
+            const token = tokenData?.access;
+            
+            const response = await fetch(`http://localhost:8000/api/cart/update/${itemId}/`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ quantity: newQuantity })
+            });
+            
+            if (response.ok) {
+                await loadCart(); // Reload cart from backend
+                window.dispatchEvent(new Event('storage'));
+            }
+        } catch (error) {
+            console.error('Error updating quantity:', error);
+        }
+    };
+
+    const removeItem = async (itemId) => {
+        try {
+            const tokenData = JSON.parse(localStorage.getItem('accessToken'));
+            const token = tokenData?.access;
+            
+            const response = await fetch(`http://localhost:8000/api/cart/remove/${itemId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                await loadCart(); // Reload cart from backend
+                window.dispatchEvent(new Event('storage'));
+            }
+        } catch (error) {
+            console.error('Error removing item:', error);
+        }
+    };
+
+    const clearCart = async () => {
+        if (!window.confirm('Are you sure you want to clear your cart?')) return;
         
-        setCartItems(updatedCart);
-        localStorage.setItem('cart', JSON.stringify(updatedCart));
-        if (onUpdateCart) onUpdateCart(updatedCart);
-    };
-
-    const removeItem = (itemId) => {
-        const updatedCart = cartItems.filter(item => 
-            item.id !== itemId
-        );
-        setCartItems(updatedCart);
-        localStorage.setItem('cart', JSON.stringify(updatedCart));
-        if (onUpdateCart) onUpdateCart(updatedCart);
-    };
-
-    const clearCart = () => {
-            setCartItems([]);
-            localStorage.setItem('cart', JSON.stringify([]));
-            if (onUpdateCart) onUpdateCart([]);
+        try {
+            const tokenData = JSON.parse(localStorage.getItem('accessToken'));
+            const token = tokenData?.access;
+            
+            const response = await fetch('http://localhost:8000/api/cart/clear/', {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                await loadCart(); // Reload cart from backend
+                window.dispatchEvent(new Event('storage'));
+            }
+        } catch (error) {
+            console.error('Error clearing cart:', error);
+        }
     };
 
     const calculateSubtotal = () => {
@@ -66,13 +128,8 @@ function CartPage({ user, onBack, onUpdateCart }) {
 
     const handleOrderPlaced = (orderData) => {
         console.log('Order placed:', orderData);
-        // Update cart count or any other state
-        loadCart();
-
-        const updatedCart = JSON.parse(localStorage.getItem('cart')) || [];
-        const total = updatedCart.reduce((sum, item) => sum + item.quantity, 0);
+        loadCart(); // Refresh cart after order
         window.dispatchEvent(new Event('storage'));
-
         setTimeout(() => {
             setShowCheckout(false);
         }, 2000);
@@ -96,7 +153,6 @@ function CartPage({ user, onBack, onUpdateCart }) {
     const subtotal = calculateSubtotal();
     const tax = calculateTax();
     const total = calculateTotal();
-
 
     return (
         <div className="cart-page">
@@ -133,8 +189,8 @@ function CartPage({ user, onBack, onUpdateCart }) {
                                 {cartItems.map(item => (
                                     <div key={item.id} className="cart-item">
                                         <div className="cart-item-image">
-                                            {item.image ? (
-                                                <img src={item.image} alt={item.name} />
+                                            {item.product_image ? (
+                                                <img src={item.product_image} alt={item.product_title} />
                                             ) : (
                                                 <div className="cart-item-image-placeholder">
                                                     [Image]
@@ -143,8 +199,7 @@ function CartPage({ user, onBack, onUpdateCart }) {
                                         </div>
                                         
                                         <div className="cart-item-details">
-                                            <h3 className="cart-item-title">{item.name}</h3>
-                                            <p className="cart-item-category">{item.categoryName}</p>
+                                            <h3 className="cart-item-title">{item.product_title}</h3>
                                         </div>
                                         
                                         <div className="cart-item-price">
