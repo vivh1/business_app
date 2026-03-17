@@ -1,15 +1,14 @@
 # Online Game Store — CRUD Web Application
 
 A 3-Tier Business Application for the course "Special Topics in Software Engeneering".
-
+&nbsp;
 ## Overview
 
 A full-stack commercial-style web application for managing an online game store. Users can browse games, create accounts, add items to their cart, and purchase titles. Admins can manage the store catalog and see all and specified user order.
 
 Built using a 3-tier architecture with a React SPA frontend, a Django REST API backend, and a SQLite database.
 
----
-
+&nbsp;
 ## Features
 
 ### Users
@@ -26,8 +25,7 @@ Built using a 3-tier architecture with a React SPA frontend, a Django REST API b
 - View all orders across all users
 - View and delete user accounts
 
----
-
+&nbsp;
 ## Architecture
 
 ### 1. Front-End (SPA)
@@ -45,8 +43,7 @@ Built using a 3-tier architecture with a React SPA frontend, a Django REST API b
 - **ORM:** Django ORM
 - Handles data persistence, migrations, and entity relationships
 
----
-
+&nbsp;
 ## Tech Stack
 
 | Layer | Technology |
@@ -61,8 +58,7 @@ Built using a 3-tier architecture with a React SPA frontend, a Django REST API b
 | Version Control | Git + GitHub |
 | Project Management | Trello |
 
----
-
+&nbsp;
 ## Project Structure
 
 ```
@@ -81,8 +77,7 @@ store_api/
 └── pytest.ini        # Pytest configuration
 ```
 
----
-
+&nbsp;
 ## API Endpoints
 
 ### Accounts — `/api/`
@@ -128,8 +123,7 @@ store_api/
 | GET | `/api/orders/all/` | Get all orders (all users) | Admin |
 | GET | `/api/orders/user/<id>/` | Get orders for a specific user | Admin |
 
----
-
+&nbsp;
 ## How to Run
 
 ### Prerequisites
@@ -141,6 +135,9 @@ store_api/
 ```bash
 # Install dependencies
 pip install -r requirements.txt
+
+# If changes made 
+python manage.py makemigrations
 
 # Apply migrations
 python manage.py migrate
@@ -157,17 +154,16 @@ The API will be available at `http://127.0.0.1:8000/`
 ### Frontend Setup
 
 ```bash
-cd frontend
+cd static\components
 npm install
 npm start
 ```
 
----
-
+&nbsp;
 ## How to Run Tests
 
 ```bash
-# From the store_api/ directory (where manage.py is)
+# From the store_api/ directory
 cd store_api
 
 # Install test dependencies
